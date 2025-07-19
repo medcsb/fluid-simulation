@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
-project(OpenGLProject)
+set(PROJECT_NAME "SPH")
+project(${PROJECT_NAME})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 
 # Add your include and src folders
 include_directories(include)
@@ -33,9 +34,16 @@ target_include_directories(imgui PUBLIC
 )
 
 # Your main application
-add_executable(OpenGLApp src/main.cpp)
+file(GLOB RENDERER_SRC
+    src/Renderer/*.cpp
+)
 
-target_link_libraries(OpenGLApp PRIVATE
+add_executable(${PROJECT_NAME}
+    src/main.cpp
+    ${RENDERER_SRC}
+)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glad
     imgui
@@ -43,16 +51,16 @@ target_link_libraries(OpenGLApp PRIVATE
 
 # On Linux, you may need pthread and dl
 if (WIN32)
-    target_link_libraries(OpenGLApp PRIVATE opengl32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 elseif(UNIX AND NOT APPLE)
-    target_link_libraries(OpenGLApp PRIVATE dl pthread)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dl pthread)
 endif()
 
 # Include dirs
-target_include_directories(OpenGLApp PRIVATE
+target_include_directories(${PROJECT_NAME} PRIVATE
     extern/glad/include
     extern/glfw/include
     extern/glm
     extern/imgui
-    include
+    src/Renderer
 )
