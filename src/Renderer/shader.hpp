@@ -27,7 +27,9 @@ public:
     void use();
 
     template<typename T>
-    void setUniform(const std::string& name, UniformType type, T value);
+    void setUniform(const std::string& name, UniformType type, T value) {
+        ::setUniform(ID, name, value);
+    }
 
     void deleteProgram() {glDeleteProgram(ID);}
 

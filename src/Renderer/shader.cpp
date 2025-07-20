@@ -24,11 +24,6 @@ void Shader::use() {
     glUseProgram(ID);
 }
 
-template<typename T>
-void Shader::setUniform(const std::string& name, UniformType type, T value) {
-    setUniform(ID, name, type, value);
-}
-
 void Shader::createProgram() {
     ID = glCreateProgram();
     glAttachShader(ID, vertexShader);

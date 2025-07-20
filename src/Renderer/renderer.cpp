@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 
+
 Renderer::Renderer() {}
 Renderer::~Renderer() {
     glDeleteVertexArrays(1, &VAO);
@@ -25,7 +26,7 @@ void Renderer::init() {
     initImGui();
     model.simpleQuad();
     initBuffers();
-    model.loadTexture("../assets/textures/brick_wall.jpg");
+    model.loadTexture("../assets/textures/wood_container.jpg");
     shader.init();
 }
 
@@ -46,7 +47,15 @@ void Renderer::render() {
         ImGui::ColorEdit3(("Vertex " + std::to_string(i) + " Color").c_str(), &model.getVertices()[i].color.x, ImGuiColorEditFlags_NoInputs);
         ImGui::SliderFloat2(("Vertex " + std::to_string(i) + " TexCoord").c_str(), &model.getVertices()[i].texCoord.x, 0.0f, 1.0f);
     }
-    
+    ImGui::End();
+
+    ImGui::Begin("Transform Editor");
+    ImGui::Text("Translation");
+    ImGui::DragFloat3("Position", glm::value_ptr(model.getTransform().translationVec), 0.01f);
+    ImGui::Text("Rotation");
+    ImGui::DragFloat3("Rotation", glm::value_ptr(model.getTransform().rotationVec), 1.0f);
+    ImGui::Text("Scale");
+    ImGui::DragFloat3("Scale", glm::value_ptr(model.getTransform().scaleVec), 0.01f, 0.1f, 10.0f);
     ImGui::End();
 
     ImGui::Render();
@@ -63,6 +72,7 @@ void Renderer::render() {
     model.bindTexture();
 
     shader.use();
+    shader.setUniform("transform", UniformType::MAT4, model.getTransform().getTransformMatrix());
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 

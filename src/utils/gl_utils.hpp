@@ -3,8 +3,15 @@
 
 #include <glad/glad.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <string>
 #include <stdexcept>
+
+enum class TextureParameter {
+
+};
 
 enum class UniformType {
     INT,
@@ -35,91 +42,84 @@ enum class UniformType {
     // TODO: Add more types as needed
 };
 
-template<typename T>
-void setUniform(GLuint program, const std::string& name, UniformType type, T value) {
+inline void setUniform(GLuint program, const std::string& name, int value) {
     int location = glGetUniformLocation(program, name.c_str());
     if (location == -1) {
         throw std::runtime_error("Uniform '" + name + "' not found in shader program.");
     }
-    switch (type) {
-        case UniformType::INT:
-            glUniform1i(location, value);
-            break;
-        case UniformType::FLOAT:
-            glUniform1f(location, value);
-            break;
-        case UniformType::UINT:
-            glUniform1ui(location, value);
-            break;
-        case UniformType::BOOL:
-            glUniform1i(location, static_cast<int>(value));
-            break;
-        case UniformType::VEC2:
-            glUniform2fv(location, 1, &value[0]);
-            break;
-        case UniformType::VEC3:
-            glUniform3fv(location, 1, &value[0]);
-            break;
-        case UniformType::VEC4:
-            glUniform4fv(location, 1, &value[0]);
-            break;
-        case UniformType::INT_VEC2:
-            glUniform2iv(location, 1, &value[0]);
-            break;
-        case UniformType::INT_VEC3:
-            glUniform3iv(location, 1, &value[0]);
-            break;
-        case UniformType::INT_VEC4:
-            glUniform4iv(location, 1, &value[0]);
-            break;
-        case UniformType::UINT_VEC2:
-            glUniform2uiv(location, 1, &value[0]);
-            break;
-        case UniformType::UINT_VEC3:
-            glUniform3uiv(location, 1, &value[0]);
-            break;
-        case UniformType::UINT_VEC4:
-            glUniform4uiv(location, 1, &value[0]);
-            break;
-        case UniformType::BOOL_VEC2:
-            glUniform2iv(location, 1, &value[0]);
-            break;
-        case UniformType::BOOL_VEC3:
-            glUniform3iv(location, 1, &value[0]);
-            break;
-        case UniformType::BOOL_VEC4:
-            glUniform4iv(location, 1, &value[0]);
-            break;
-        case UniformType::MAT2:
-            glUniformMatrix2fv(location, 1, GL_FALSE, &value[0][0]);
-            break;
-        case UniformType::MAT3:
-            glUniformMatrix3fv(location, 1, GL_FALSE, &value[0][0]);
-            break;
-        case UniformType::MAT4:
-            glUniformMatrix4fv(location, 1, GL_FALSE, &value[0][0]);
-            break;
-        case UniformType::MAT2x3:
-            glUniformMatrix2x3fv(location, 1, GL_FALSE, &value[0][0]);
-            break;
-        case UniformType::MAT2x4:
-            glUniformMatrix2x4fv(location, 1, GL_FALSE, &value[0][0]);
-            break;
-        case UniformType::MAT3x2:
-            glUniformMatrix3x2fv(location, 1, GL_FALSE, &value[0][0]);
-            break;
-        case UniformType::MAT3x4:
-            glUniformMatrix3x4fv(location, 1, GL_FALSE, &value[0][0]);
-            break;
-        case UniformType::MAT4x2:
-            glUniformMatrix4x2fv(location, 1, GL_FALSE, &value[0][0]);
-            break;
-        case UniformType::MAT4x3:
-            glUniformMatrix4x3fv(location, 1, GL_FALSE, &value[0][0]);
-            break;
-        default:
-            throw std::runtime_error("Unsupported uniform type.");
+    glUniform1i(location, value);
+}
+
+inline void setUniform(GLuint program, const std::string& name, float value) {
+    int location = glGetUniformLocation(program, name.c_str());
+    if (location == -1) {
+        throw std::runtime_error("Uniform '" + name + "' not found in shader program.");
     }
+    glUniform1f(location, value);
+}
+
+inline void setUniform(GLuint program, const std::string& name, unsigned int value) {
+    int location = glGetUniformLocation(program, name.c_str());
+    if (location == -1) {
+        throw std::runtime_error("Uniform '" + name + "' not found in shader program.");
+    }
+    glUniform1ui(location, value);
+}
+
+inline void setUniform(GLuint program, const std::string& name, bool value) {
+    int location = glGetUniformLocation(program, name.c_str());
+    if (location == -1) {
+        throw std::runtime_error("Uniform '" + name + "' not found in shader program.");
+    }
+    glUniform1i(location, static_cast<int>(value));
+}
+
+inline void setUniform(GLuint program, const std::string& name, const glm::vec2& value) {
+    int location = glGetUniformLocation(program, name.c_str());
+    if (location == -1) {
+        throw std::runtime_error("Uniform '" + name + "' not found in shader program.");
+    }
+    glUniform2fv(location, 1, glm::value_ptr(value));
+}
+
+inline void setUniform(GLuint program, const std::string& name, const glm::vec3& value) {
+    int location = glGetUniformLocation(program, name.c_str());
+    if (location == -1) {
+        throw std::runtime_error("Uniform '" + name + "' not found in shader program.");
+    }
+    glUniform3fv(location, 1, glm::value_ptr(value));
+}
+
+inline void setUniform(GLuint program, const std::string& name, const glm::vec4& value) {
+    int location = glGetUniformLocation(program, name.c_str());
+    if (location == -1) {
+        throw std::runtime_error("Uniform '" + name + "' not found in shader program.");
+    }
+    glUniform4fv(location, 1, glm::value_ptr(value));
+}
+
+inline void setUniform(GLuint program, const std::string& name, const glm::mat2& value) {
+    int location = glGetUniformLocation(program, name.c_str());
+    if (location == -1) {
+        throw std::runtime_error("Uniform '" + name + "' not found in shader program.");
+    }
+    glUniformMatrix2fv(location, 1, GL_FALSE, glm::value_ptr(value));
+}
+
+inline void setUniform(GLuint program, const std::string& name, const glm::mat3& value) {
+    int location = glGetUniformLocation(program, name.c_str());
+    if (location == -1) {
+        throw std::runtime_error("Uniform '" + name + "' not found in shader program.");
+    }
+    glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(value));
+}
+
+inline void setUniform(GLuint program, const std::string& name, const glm::mat4& value) {
+    int location = glGetUniformLocation(program, name.c_str());
+    if (location == -1) {
+        throw std::runtime_error("Uniform '" + name + "' not found in shader program.");
+    }
+    glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
 }
 
 #endif // GL_UTILS_HPP
