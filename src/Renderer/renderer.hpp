@@ -1,19 +1,38 @@
 #ifndef RENDERER_HPP
 #define RENDERER_HPP
 
+#include "shader.hpp"
+#include "model.hpp"
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
+#include "stb_image.h"
+
+#include <iostream>
+
 // using OpenGL 4.6
 const int OPENGL_VERSION_MAJOR = 4;
-const int OPENGL_VERSION_MINOR = 6;
+const int OPENGL_VERSION_MINOR = 5;
 
+extern const char *vertexShaderSource;
+extern const char *fragmentShaderSource;
 
 class Renderer {
 private:
     GLFWwindow* window;
     int width = 800;
     int height = 600;
+
+    uint32_t VBO, VAO, EBO;
+    uint32_t texture_wall, texture_statue;
+    
+    Shader shader{"../shaders/vert.glsl", "../shaders/frag.glsl"};
+    Model model;
 
 public:
 
@@ -31,6 +50,8 @@ public:
 private:
     void initWindow();
     void initOpenGL();
+    void initImGui();
+    void initBuffers();
 
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);  
 };

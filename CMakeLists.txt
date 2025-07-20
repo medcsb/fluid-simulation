@@ -62,5 +62,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     extern/glfw/include
     extern/glm
     extern/imgui
+    extern/imgui/backends
+    extern/single_header_libs
     src/Renderer
+    src/utils
+
 )
