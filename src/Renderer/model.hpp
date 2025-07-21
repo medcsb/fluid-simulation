@@ -21,6 +21,10 @@ public:
         glm::vec3 color;
         glm::vec2 texCoord;
     };
+    struct VertexNoTex {
+        glm::vec3 pos;
+        glm::vec3 color;
+    };
     struct Transform {
         glm::vec3 translationVec = glm::vec3(0.0f);
         glm::vec3 rotationVec = glm::vec3(0.0f);  // In degrees
@@ -45,6 +49,7 @@ private:
 public:
 
     std::vector<Vertex> vertices;
+    std::vector<VertexNoTex> verticesNoTex;
     std::vector<uint32_t> indices;
     Transform transform{};
 
@@ -61,6 +66,7 @@ public:
     void loadTexture(const std::string& path);
 
     std::vector<Vertex>& getVertices() {return vertices;}
+    std::vector<VertexNoTex>& getVerticesNoTex() {return verticesNoTex;}
     std::vector<uint32_t>& getIndices() {return indices;}
     Transform& getTransform() {return transform;}
 };

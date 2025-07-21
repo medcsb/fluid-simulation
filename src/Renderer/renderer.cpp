@@ -7,9 +7,10 @@
 
 Renderer::Renderer() {}
 Renderer::~Renderer() {
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
+    for (auto& buffer : buffers) {
+        buffer.cleanup();
+    }
+
     shader.deleteProgram();
 
     ImGui_ImplOpenGL3_Shutdown();
@@ -78,7 +79,7 @@ void Renderer::render() {
     ImGui::Text("Camera Roll: %.2f", camera.getRoll());
     ImGui::DragFloat("Camera Speed", &cameraController.getMovementSpeed(), 2.0f, 5.0f, 50.0f);
     ImGui::DragFloat("Roll Speed", &cameraController.getRollSpeed(), 0.01f, 0.1f, 10.0f);
-    ImGui::DragFloat("Mouse Sensitivity", &cameraController.getMouseSensitivity(), 0.1f, 0.5f, 5.0f);
+    ImGui::DragFloat("Mouse Sensitivity", &cameraController.getMouseSensitivity(), 0.01f, 0.5f, 0.01f);
     ImGui::DragFloat("Camera FOV", &camera.getFov(), 0.1f, 1.0f, 90.0f);
     // add toggle to switch between prespective and orthographic projection
     ImGui::Checkbox("Perspective/Orthographic", &isPerspective);
@@ -99,8 +100,8 @@ void Renderer::render() {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Model::Vertex) * model.getVertices().size(), model.getVertices().data());
+    //glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Model::Vertex) * model.getVertices().size(), model.getVertices().data());
 
     model.bindTexture();
 
@@ -108,8 +109,11 @@ void Renderer::render() {
     shader.setUniform("transform", UniformType::MAT4, model.transform.getTransformMatrix());
     shader.setUniform("view", UniformType::MAT4, camera.getViewMatrix());
     shader.setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(model.getIndices().size()), GL_UNSIGNED_INT, 0);
+    
+    for (const auto& buffer : buffers) {
+        buffer.bind();
+        buffer.draw();
+    }
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -170,27 +174,23 @@ void Renderer::initImGui() {
 }
 
 void Renderer::initBuffers() {
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
+    Buffer simpleBuffer;
+    VAOConfigInfo simpleBufferConfig{};
+    simpleBufferConfig.attributes = {
+        {0, 3, GL_FLOAT, GL_FALSE, sizeof(Model::Vertex), offsetof(Model::Vertex, pos)},
+        {1, 3, GL_FLOAT, GL_FALSE, sizeof(Model::Vertex), offsetof(Model::Vertex, color)},
+        {2, 2, GL_FLOAT, GL_FALSE, sizeof(Model::Vertex), offsetof(Model::Vertex, texCoord)}
+    };
+    simpleBufferConfig.sizeOfVertex = sizeof(Model::Vertex);
+    simpleBufferConfig.sizeOfVertexData = simpleBufferConfig.sizeOfVertex * model.getVertices().size();
+    simpleBufferConfig.verticesCount = model.getVertices().size();
+    simpleBufferConfig.indexCount = model.getIndices().size();
+    simpleBufferConfig.useEBO = true;
+    simpleBufferConfig.drawMode = GL_TRIANGLES;
 
-    glBindVertexArray(VAO);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Model::Vertex) * model.getVertices().size(), model.getVertices().data(), GL_STATIC_DRAW);
+    simpleBuffer.init(model.getVertices().data(), model.getIndices().data(), simpleBufferConfig);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * model.getIndices().size(), model.getIndices().data(), GL_STATIC_DRAW);
-
-    // Position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Model::Vertex), (void*)offsetof(Model::Vertex, pos));
-    glEnableVertexAttribArray(0);
-    // Color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Model::Vertex), (void*)offsetof(Model::Vertex, color));
-    glEnableVertexAttribArray(1);
-    // Texture coordinate attribute
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Model::Vertex), (void*)offsetof(Model::Vertex, texCoord));
-    glEnableVertexAttribArray(2);
+    buffers.push_back(simpleBuffer);
 }
 
 void Renderer::framebuffer_size_callback(GLFWwindow* window, int width, int height) {

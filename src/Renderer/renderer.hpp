@@ -5,6 +5,7 @@
 #include "model.hpp"
 #include "camera.hpp"
 #include "cameraController.hpp"
+#include "buffer.hpp"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -40,6 +41,7 @@ private:
     Model model;
     Camera camera;
     CameraController cameraController{camera};
+    std::vector<Buffer> buffers;
 
     // cameara controller ImGui
     bool isPerspective = true;
