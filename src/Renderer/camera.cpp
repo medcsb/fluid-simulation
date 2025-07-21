@@ -39,6 +39,10 @@ void Camera::processRotation(float deltaYaw, float deltaPitch, float deltaRoll) 
     if (pitch > 89.0f) pitch = 89.0f;
     if (pitch < -89.0f) pitch = -89.0f;
 
+    if (yaw > 270.0f) yaw = -90.0f;
+    if (yaw < -450.0f) yaw = -90.0f;
+
+
     updateViewMatrix();
 }
 

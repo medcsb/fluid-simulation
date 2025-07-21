@@ -58,7 +58,7 @@ void CameraController::processMouseInput(GLFWwindow* window, float deltaTime) {
     float xoffset = static_cast<float>(xpos - lastX) * mouseSensitivity;
     float yoffset = static_cast<float>(lastY - ypos) * mouseSensitivity;
 
-    camera.processRotation(xoffset, yoffset, 0.0f); // No roll adjustment here
+    camera.processRotation(xoffset * deltaTime, yoffset * deltaTime, 0.0f); // No roll adjustment here
 
     lastX = static_cast<float>(xpos);
     lastY = static_cast<float>(ypos);

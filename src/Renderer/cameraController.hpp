@@ -24,7 +24,7 @@ private:
 public:
     float movementSpeed{2.5f};
     float rollSpeed{10.0f};
-    float mouseSensitivity{0.1f};
+    float mouseSensitivity{1.0f};
     float lastX{0.0f};
     float lastY{0.0f};
     bool firstMouse{true};

@@ -25,9 +25,10 @@ void Renderer::init() {
     initOpenGL();
     initImGui();
     //model.simpleQuad();
-    model.simpleCube();
+    //model.simpleCube();
+    model.texturedCube();
     initBuffers();
-    //model.loadTexture("../assets/textures/wood_container.jpg");
+    model.loadTexture("../assets/textures/wood_container.jpg");
     shader.init();
     camera.init(static_cast<float>(width), static_cast<float>(height));
     glEnable(GL_DEPTH_TEST); // Enable depth testing for 3D rendering
@@ -46,9 +47,6 @@ void Renderer::render() {
 
     ImGui::Begin("Info");
     ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
-    ImGui::Text("My  fps: %.2f", 1.0f / frameTime);
-    // to see if mine is accurate
-    ImGui::Text("difference: %.2f", ImGui::GetIO().Framerate - (1.0f / frameTime));
     ImGui::Text("OpenGL Version: %d.%d", OPENGL_VERSION_MAJOR, OPENGL_VERSION_MINOR);
     ImGui::End();
     //ImGui::Begin("Model Editor");
@@ -80,7 +78,7 @@ void Renderer::render() {
     ImGui::Text("Camera Roll: %.2f", camera.getRoll());
     ImGui::DragFloat("Camera Speed", &cameraController.getMovementSpeed(), 2.0f, 5.0f, 50.0f);
     ImGui::DragFloat("Roll Speed", &cameraController.getRollSpeed(), 0.01f, 0.1f, 10.0f);
-    ImGui::DragFloat("Mouse Sensitivity", &cameraController.getMouseSensitivity(), 0.01f, 0.01f, 1.0f);
+    ImGui::DragFloat("Mouse Sensitivity", &cameraController.getMouseSensitivity(), 0.1f, 0.5f, 5.0f);
     ImGui::DragFloat("Camera FOV", &camera.getFov(), 0.1f, 1.0f, 90.0f);
     // add toggle to switch between prespective and orthographic projection
     ImGui::Checkbox("Perspective/Orthographic", &isPerspective);
@@ -104,7 +102,7 @@ void Renderer::render() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Model::Vertex) * model.getVertices().size(), model.getVertices().data());
 
-    //model.bindTexture();
+    model.bindTexture();
 
     shader.use();
     shader.setUniform("transform", UniformType::MAT4, model.transform.getTransformMatrix());
