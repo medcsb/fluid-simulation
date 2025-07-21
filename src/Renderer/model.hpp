@@ -56,6 +56,7 @@ public:
 
     void simpleTriangle();
     void simpleQuad();
+    void simpleCube();
     void loadTexture(const std::string& path);
 
     std::vector<Vertex>& getVertices() {return vertices;}

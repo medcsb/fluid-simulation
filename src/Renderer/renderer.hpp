@@ -3,6 +3,8 @@
 
 #include "shader.hpp"
 #include "model.hpp"
+#include "camera.hpp"
+#include "cameraController.hpp"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -28,11 +30,19 @@ private:
     int width = 800;
     int height = 600;
 
+    float frameTime = 0.0f;
+    float lastFrame = 0.0f;
+
     uint32_t VBO, VAO, EBO;
     uint32_t texture_wall, texture_statue;
     
     Shader shader{"../shaders/vert.glsl", "../shaders/frag.glsl"};
     Model model;
+    Camera camera;
+    CameraController cameraController{camera};
+
+    // cameara controller ImGui
+    bool isPerspective = true;
 
 public:
 

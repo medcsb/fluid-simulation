@@ -7,9 +7,11 @@ out vec3 vertColor; // specify a color output to the fragment shader
 out vec2 TexCoord;
 
 uniform mat4 transform;
+uniform mat4 view;
+uniform mat4 projection;
 
 void main() {
-    gl_Position = transform * vec4(aPos, 1.0); // see how we directly give a vec3 to vec4's constructor
+    gl_Position = projection * view * transform * vec4(aPos, 1.0); // see how we directly give a vec3 to vec4's constructor
     vertColor = aColor;
     TexCoord = vec2(aTexCoord.x, aTexCoord.y);
 }
