@@ -37,10 +37,10 @@ private:
     uint32_t VBO, VAO, EBO;
     uint32_t texture_wall, texture_statue;
     
-    Shader shader{"../shaders/vert.glsl", "../shaders/frag.glsl"};
-    Model model;
     Camera camera;
     CameraController cameraController{camera};
+    std::vector<Model> models;
+    std::vector<Shader> shaders;
     std::vector<Buffer> buffers;
 
     // cameara controller ImGui
@@ -63,6 +63,8 @@ private:
     void initWindow();
     void initOpenGL();
     void initImGui();
+    void initShaders();
+    void initModels();
     void initBuffers();
 
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);  

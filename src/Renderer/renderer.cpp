@@ -11,7 +11,9 @@ Renderer::~Renderer() {
         buffer.cleanup();
     }
 
-    shader.deleteProgram();
+    for (auto& shader : shaders) {
+        shader.deleteProgram();
+    }
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -25,12 +27,9 @@ void Renderer::init() {
     initWindow();
     initOpenGL();
     initImGui();
-    //model.simpleQuad();
-    //model.simpleCube();
-    model.texturedCube();
+    initShaders();
+    initModels();
     initBuffers();
-    model.loadTexture("../assets/textures/wood_container.jpg");
-    shader.init();
     camera.init(static_cast<float>(width), static_cast<float>(height));
     glEnable(GL_DEPTH_TEST); // Enable depth testing for 3D rendering
     frameTime = static_cast<float>(glfwGetTime());
@@ -61,11 +60,33 @@ void Renderer::render() {
 
     ImGui::Begin("Transform Editor");
     ImGui::Text("Translation");
-    ImGui::DragFloat3("Position", glm::value_ptr(model.getTransform().translationVec), 0.01f);
+    ImGui::DragFloat3("Position", glm::value_ptr(models[0].getTransform().translationVec), 0.01f);
     ImGui::Text("Rotation");
-    ImGui::DragFloat3("Rotation", glm::value_ptr(model.getTransform().rotationVec), 1.0f);
+    ImGui::DragFloat3("Rotation", glm::value_ptr(models[0].getTransform().rotationVec), 1.0f);
     ImGui::Text("Scale");
-    ImGui::DragFloat3("Scale", glm::value_ptr(model.getTransform().scaleVec), 0.01f, 0.1f, 10.0f);
+    ImGui::DragFloat3("Scale", glm::value_ptr(models[0].getTransform().scaleVec), 0.01f, 0.1f, 10.0f);
+    ImGui::Text("Floor");
+    ImGui::DragFloat3("Floor Position", glm::value_ptr(models[2].getTransform().translationVec), 0.01f);
+    ImGui::DragFloat3("Floor Rotation", glm::value_ptr(models[2].getTransform().rotationVec), 1.0f);
+    ImGui::DragFloat3("Floor Scale", glm::value_ptr(models[2].getTransform().scaleVec), 0.01f, 0.1f, 10.0f);
+    
+    ImGui::End();
+
+    ImGui::Begin("Light Editor");
+    ImGui::Text("Light Color");
+    ImGui::ColorEdit3("Color", glm::value_ptr(models[1].getVerticesNoTex()[0].color), ImGuiColorEditFlags_NoInputs);
+    ImGui::Text("ambient Strength");
+    ImGui::DragFloat("Ambient Strength", &models[1].light.ambientStrength, 0.01f, 0.0f, 1.0f);
+    ImGui::Text("Specular Strength");
+    ImGui::DragFloat("Specular Strength", &models[1].light.specularStrength, 0.1f, 0.0f, 10.0f);
+    ImGui::Text("Specular Power");
+    ImGui::DragInt("Specular Power", &models[1].light.specularPower, 1.0f, 1, 360);
+    ImGui::Text("Position");
+    ImGui::DragFloat3("Position", glm::value_ptr(models[1].getTransform().translationVec), 0.01f);
+    ImGui::Text("Rotation");
+    ImGui::DragFloat3("Rotation", glm::value_ptr(models[1].getTransform().rotationVec), 1.0f);
+    ImGui::Text("Scale");
+    ImGui::DragFloat3("Scale", glm::value_ptr(models[1].getTransform().scaleVec), 0.01f, 0.1f, 10.0f);
     ImGui::End();
 
     // camera controls
@@ -101,19 +122,49 @@ void Renderer::render() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Model::Vertex) * model.getVertices().size(), model.getVertices().data());
+    //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertex) * model.getVertices().size(), model.getVertices().data());
 
-    model.bindTexture();
+    //models[0].bindTexture();
 
-    shader.use();
-    shader.setUniform("transform", UniformType::MAT4, model.transform.getTransformMatrix());
-    shader.setUniform("view", UniformType::MAT4, camera.getViewMatrix());
-    shader.setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
+    shaders[0].use();
+    shaders[0].setUniform("transform", UniformType::MAT4, models[0].transform.getTransformMatrix());
+    shaders[0].setUniform("view", UniformType::MAT4, camera.getViewMatrix());
+    shaders[0].setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
+    shaders[0].setUniform("lightColor", UniformType::VEC3, models[1].getVerticesNoTex()[0].color);
+    shaders[0].setUniform("lightPos", UniformType::VEC3, models[1].getTransform().translationVec);
+    shaders[0].setUniform("viewPos", UniformType::VEC3, camera.getPosition());
+    shaders[0].setUniform("ambientStrength", UniformType::FLOAT, models[1].light.ambientStrength);
+    shaders[0].setUniform("specularStrength", UniformType::FLOAT, models[1].light.specularStrength);
+    shaders[0].setUniform("specularPower", UniformType::INT, models[1].light.specularPower);
+    shaders[0].setUniform("useTexture", UniformType::BOOL, true);
+
+    buffers[0].bind();
+    buffers[0].draw();
+
+    shaders[0].use();
+    shaders[0].setUniform("transform", UniformType::MAT4, models[2].transform.getTransformMatrix());
+    shaders[0].setUniform("view", UniformType::MAT4, camera.getViewMatrix());
+    shaders[0].setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
+    shaders[0].setUniform("lightColor", UniformType::VEC3, models[1].getVerticesNoTex()[0].color);
+    shaders[0].setUniform("lightPos", UniformType::VEC3, models[1].getTransform().translationVec);
+    shaders[0].setUniform("viewPos", UniformType::VEC3, camera.getPosition());
+    shaders[0].setUniform("ambientStrength", UniformType::FLOAT, models[1].light.ambientStrength);
+    shaders[0].setUniform("specularStrength", UniformType::FLOAT, models[1].light.specularStrength);
+    shaders[0].setUniform("specularPower", UniformType::INT, models[1].light.specularPower);
+    shaders[0].setUniform("useTexture", UniformType::BOOL, false);
+
+    buffers[2].bind();
+    buffers[2].draw();
+
+    shaders[1].use();
+    shaders[1].setUniform("transform", UniformType::MAT4, models[1].transform.getTransformMatrix());
+    shaders[1].setUniform("view", UniformType::MAT4, camera.getViewMatrix());
+    shaders[1].setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
+    shaders[1].setUniform("lightColor", UniformType::VEC3, models[1].getVerticesNoTex()[0].color);
+
+    buffers[1].bind();  
+    buffers[1].draw();
     
-    for (const auto& buffer : buffers) {
-        buffer.bind();
-        buffer.draw();
-    }
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -173,24 +224,88 @@ void Renderer::initImGui() {
     ImGui_ImplOpenGL3_Init(glsl_version.c_str());
 }
 
+void Renderer::initShaders() {
+    Shader shader{"../shaders/vert.glsl", "../shaders/frag.glsl"};
+    shader.init();
+    shaders.push_back(shader);
+
+    Shader lightShader{"../shaders/lightvert.glsl", "../shaders/lightfrag.glsl"};
+    lightShader.init();
+    shaders.push_back(lightShader);
+}
+
+void Renderer::initModels() {
+    Model cubeModel;
+    cubeModel.texturedCube();
+    cubeModel.loadTexture("../assets/textures/wood_container.jpg");
+    models.push_back(cubeModel);
+    Model light;
+    light.simpleCube();
+    light.getTransform().translationVec = glm::vec3(1.0f, 2.0f, 0.0f);
+    light.getTransform().scaleVec = glm::vec3(0.2f, 0.2f, 0.2f);
+    models.push_back(light);
+    Model floor;
+    floor.simpleQuad();
+    floor.getTransform().translationVec = glm::vec3(0.0f, -0.5f, 0.0f);
+    floor.getTransform().scaleVec = glm::vec3(10.0f, 10.0f, 10.0f);
+    floor.getTransform().rotationVec = glm::vec3(90.0f, 0.0f, 0.0f);
+    models.push_back(floor);
+}
+
 void Renderer::initBuffers() {
+    // Buffer for normal models
     Buffer simpleBuffer;
     VAOConfigInfo simpleBufferConfig{};
     simpleBufferConfig.attributes = {
-        {0, 3, GL_FLOAT, GL_FALSE, sizeof(Model::Vertex), offsetof(Model::Vertex, pos)},
-        {1, 3, GL_FLOAT, GL_FALSE, sizeof(Model::Vertex), offsetof(Model::Vertex, color)},
-        {2, 2, GL_FLOAT, GL_FALSE, sizeof(Model::Vertex), offsetof(Model::Vertex, texCoord)}
+        {0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, pos)},
+        {1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, color)},
+        {2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, normal)},
+        {3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, texCoord)}
     };
-    simpleBufferConfig.sizeOfVertex = sizeof(Model::Vertex);
-    simpleBufferConfig.sizeOfVertexData = simpleBufferConfig.sizeOfVertex * model.getVertices().size();
-    simpleBufferConfig.verticesCount = model.getVertices().size();
-    simpleBufferConfig.indexCount = model.getIndices().size();
+    simpleBufferConfig.sizeOfVertex = sizeof(Vertex);
+    simpleBufferConfig.sizeOfVertexData = simpleBufferConfig.sizeOfVertex * models[0].getVertices().size();
+    simpleBufferConfig.verticesCount = models[0].getVertices().size();
+    simpleBufferConfig.indexCount = models[0].getIndices().size();
     simpleBufferConfig.useEBO = true;
     simpleBufferConfig.drawMode = GL_TRIANGLES;
 
-    simpleBuffer.init(model.getVertices().data(), model.getIndices().data(), simpleBufferConfig);
-
+    simpleBuffer.init(models[0].getVertices().data(), models[0].getIndices().data(), simpleBufferConfig);
     buffers.push_back(simpleBuffer);
+
+    // Buffer for light
+    Buffer lightBuffer;
+    VAOConfigInfo lightBufferConfig{};
+    lightBufferConfig.attributes = {
+        {0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexNoTex), offsetof(VertexNoTex, pos)},
+        {1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexNoTex), offsetof(VertexNoTex, color)},
+        {2, 3, GL_FLOAT, GL_FALSE, sizeof(VertexNoTex), offsetof(VertexNoTex, normal)}
+    };
+    lightBufferConfig.sizeOfVertex = sizeof(VertexNoTex);
+    lightBufferConfig.sizeOfVertexData = lightBufferConfig.sizeOfVertex * models[1].getVerticesNoTex().size();
+    lightBufferConfig.verticesCount = models[1].getVerticesNoTex().size();
+    lightBufferConfig.indexCount = models[1].getIndices().size();
+    lightBufferConfig.useEBO = true;
+    lightBufferConfig.drawMode = GL_TRIANGLES;
+    lightBuffer.init(models[1].getVerticesNoTex().data(), models[1].getIndices().data(), lightBufferConfig);
+    buffers.push_back(lightBuffer);
+
+    // Buffer for floor
+    Buffer floorBuffer;
+    VAOConfigInfo floorBufferConfig{};
+    floorBufferConfig.attributes = {
+        {0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, pos)},
+        {1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, color)},
+        {2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, normal)},
+        {3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, texCoord)}
+    };
+    floorBufferConfig.sizeOfVertex = sizeof(Vertex);
+    floorBufferConfig.sizeOfVertexData = floorBufferConfig.sizeOfVertex * models[2].getVertices().size();
+    floorBufferConfig.verticesCount = models[2].getVertices().size();
+    floorBufferConfig.indexCount = models[2].getIndices().size();
+    floorBufferConfig.useEBO = true;
+    floorBufferConfig.drawMode = GL_TRIANGLES;
+    floorBuffer.init(models[2].getVertices().data(), models[2].getIndices().data(), floorBufferConfig);
+    buffers.push_back(floorBuffer);
 }
 
 void Renderer::framebuffer_size_callback(GLFWwindow* window, int width, int height) {

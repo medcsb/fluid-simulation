@@ -14,34 +14,40 @@
 #include <vector>
 #include <string>
 
+struct Vertex {
+    glm::vec3 pos;
+    glm::vec3 color;
+    glm::vec3 normal;
+    glm::vec2 texCoord;
+};
+struct VertexNoTex {
+    glm::vec3 pos;
+    glm::vec3 color;
+    glm::vec3 normal;
+};
+struct Light {
+    float ambientStrength = 0.1f;
+    float specularStrength = 0.5f;
+    int specularPower = 32;
+};
+struct Transform {
+    glm::vec3 translationVec = glm::vec3(0.0f);
+    glm::vec3 rotationVec = glm::vec3(0.0f);  // In degrees
+    glm::vec3 scaleVec = glm::vec3(1.0f);
+
+    glm::mat4 getTransformMatrix() const {
+        glm::mat4 translation = glm::translate(glm::mat4(1.0f), translationVec);
+        glm::mat4 rotation = glm::yawPitchRoll(
+            glm::radians(rotationVec.y),
+            glm::radians(rotationVec.x),
+            glm::radians(rotationVec.z)
+        );
+        glm::mat4 scale = glm::scale(glm::mat4(1.0f), scaleVec);
+        return translation * rotation * scale;
+    }
+};
+
 class Model {
-public:
-    struct Vertex {
-        glm::vec3 pos;
-        glm::vec3 color;
-        glm::vec2 texCoord;
-    };
-    struct VertexNoTex {
-        glm::vec3 pos;
-        glm::vec3 color;
-    };
-    struct Transform {
-        glm::vec3 translationVec = glm::vec3(0.0f);
-        glm::vec3 rotationVec = glm::vec3(0.0f);  // In degrees
-        glm::vec3 scaleVec = glm::vec3(1.0f);
-
-        glm::mat4 getTransformMatrix() const {
-            glm::mat4 translation = glm::translate(glm::mat4(1.0f), translationVec);
-            glm::mat4 rotation = glm::yawPitchRoll(
-                glm::radians(rotationVec.y),
-                glm::radians(rotationVec.x),
-                glm::radians(rotationVec.z)
-            );
-            glm::mat4 scale = glm::scale(glm::mat4(1.0f), scaleVec);
-            return translation * rotation * scale;
-        }
-    };
-
 private:
 
     uint32_t texture;
@@ -52,6 +58,7 @@ public:
     std::vector<VertexNoTex> verticesNoTex;
     std::vector<uint32_t> indices;
     Transform transform{};
+    Light light{};
 
     Model();
     ~Model();
@@ -69,6 +76,7 @@ public:
     std::vector<VertexNoTex>& getVerticesNoTex() {return verticesNoTex;}
     std::vector<uint32_t>& getIndices() {return indices;}
     Transform& getTransform() {return transform;}
+    Light& getLight() {return light;}
 };
 
 #endif // MODEL_HPP
