@@ -32,6 +32,8 @@ void Renderer::init() {
     initBuffers();
     camera.init(static_cast<float>(width), static_cast<float>(height));
     glEnable(GL_DEPTH_TEST); // Enable depth testing for 3D rendering
+    glEnable(GL_BLEND); // Enable blending for transparency
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
     frameTime = static_cast<float>(glfwGetTime());
 }
 
@@ -48,6 +50,8 @@ void Renderer::render() {
     ImGui::Begin("Info");
     ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
     ImGui::Text("OpenGL Version: %d.%d", OPENGL_VERSION_MAJOR, OPENGL_VERSION_MINOR);
+    // toggle for depth
+    ImGui::Checkbox("Show Depth", &showDepth);
     ImGui::End();
     //ImGui::Begin("Model Editor");
     // vec3 silder for the 3 vertices of the triangle
@@ -59,33 +63,34 @@ void Renderer::render() {
     //ImGui::End();
 
     ImGui::Begin("Transform Editor");
-    ImGui::Text("Translation");
-    ImGui::DragFloat3("Position", glm::value_ptr(models[0].getTransform().translationVec), 0.01f);
-    ImGui::Text("Rotation");
-    ImGui::DragFloat3("Rotation", glm::value_ptr(models[0].getTransform().rotationVec), 1.0f);
-    ImGui::Text("Scale");
-    ImGui::DragFloat3("Scale", glm::value_ptr(models[0].getTransform().scaleVec), 0.01f, 0.1f, 10.0f);
-    ImGui::Text("Floor");
-    ImGui::DragFloat3("Floor Position", glm::value_ptr(models[2].getTransform().translationVec), 0.01f);
-    ImGui::DragFloat3("Floor Rotation", glm::value_ptr(models[2].getTransform().rotationVec), 1.0f);
-    ImGui::DragFloat3("Floor Scale", glm::value_ptr(models[2].getTransform().scaleVec), 0.01f, 0.1f, 10.0f);
+    ImGui::Text("CUBE");
+    ImGui::DragFloat3("cube pos", glm::value_ptr(models[0].getTransform().translationVec), 0.01f);
+    ImGui::DragFloat3("cube rot", glm::value_ptr(models[0].getTransform().rotationVec), 1.0f);
+    ImGui::DragFloat3("cube scale", glm::value_ptr(models[0].getTransform().scaleVec), 0.01f, 0.1f, 10.0f);
+    ImGui::ColorEdit3("cube color", glm::value_ptr(models[0].getColor()), ImGuiColorEditFlags_NoInputs);
+    ImGui::Text("FLOOR");
+    ImGui::DragFloat3("Position", glm::value_ptr(models[2].getTransform().translationVec), 0.01f);
+    ImGui::DragFloat3("Rotation", glm::value_ptr(models[2].getTransform().rotationVec), 1.0f);
+    ImGui::DragFloat3("Scale", glm::value_ptr(models[2].getTransform().scaleVec), 0.01f, 0.1f, 10.0f);
+    ImGui::ColorEdit3("color", glm::value_ptr(models[2].getColor()), ImGuiColorEditFlags_NoInputs);
+    ImGui::Text("DRAGON");
+    ImGui::DragFloat3("dragon pos", glm::value_ptr(models[3].getTransform().translationVec), 0.01f);
+    ImGui::DragFloat3("dragon rot", glm::value_ptr(models[3].getTransform().rotationVec), 1.0f);
+    ImGui::DragFloat3("dragon scale", glm::value_ptr(models[3].getTransform().scaleVec), 0.01f, 0.1f, 10.0f);
+    ImGui::ColorEdit3("dragon color", glm::value_ptr(models[3].getColor()), ImGuiColorEditFlags_NoInputs);
     
     ImGui::End();
 
+    // light controls
+
     ImGui::Begin("Light Editor");
-    ImGui::Text("Light Color");
-    ImGui::ColorEdit3("Color", glm::value_ptr(models[1].getVerticesNoTex()[0].color), ImGuiColorEditFlags_NoInputs);
-    ImGui::Text("ambient Strength");
+    ImGui::ColorEdit3("Color", glm::value_ptr(models[1].getColor()), ImGuiColorEditFlags_NoInputs);
     ImGui::DragFloat("Ambient Strength", &models[1].light.ambientStrength, 0.01f, 0.0f, 1.0f);
-    ImGui::Text("Specular Strength");
     ImGui::DragFloat("Specular Strength", &models[1].light.specularStrength, 0.1f, 0.0f, 10.0f);
-    ImGui::Text("Specular Power");
     ImGui::DragInt("Specular Power", &models[1].light.specularPower, 1.0f, 1, 360);
-    ImGui::Text("Position");
+    ImGui::DragFloat("opaque Value", &models[1].getOpaqueVal(), 0.01, 0.0, 1.0);
     ImGui::DragFloat3("Position", glm::value_ptr(models[1].getTransform().translationVec), 0.01f);
-    ImGui::Text("Rotation");
     ImGui::DragFloat3("Rotation", glm::value_ptr(models[1].getTransform().rotationVec), 1.0f);
-    ImGui::Text("Scale");
     ImGui::DragFloat3("Scale", glm::value_ptr(models[1].getTransform().scaleVec), 0.01f, 0.1f, 10.0f);
     ImGui::End();
 
@@ -130,13 +135,16 @@ void Renderer::render() {
     shaders[0].setUniform("transform", UniformType::MAT4, models[0].transform.getTransformMatrix());
     shaders[0].setUniform("view", UniformType::MAT4, camera.getViewMatrix());
     shaders[0].setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
-    shaders[0].setUniform("lightColor", UniformType::VEC3, models[1].getVerticesNoTex()[0].color);
+    shaders[0].setUniform("lightColor", UniformType::VEC3, models[1].getColor());
     shaders[0].setUniform("lightPos", UniformType::VEC3, models[1].getTransform().translationVec);
     shaders[0].setUniform("viewPos", UniformType::VEC3, camera.getPosition());
+    shaders[0].setUniform("color", UniformType::VEC3, models[0].getColor());
     shaders[0].setUniform("ambientStrength", UniformType::FLOAT, models[1].light.ambientStrength);
     shaders[0].setUniform("specularStrength", UniformType::FLOAT, models[1].light.specularStrength);
     shaders[0].setUniform("specularPower", UniformType::INT, models[1].light.specularPower);
     shaders[0].setUniform("useTexture", UniformType::BOOL, true);
+    if (showDepth) shaders[0].setUniform("showDepth", UniformType::BOOL, true);
+    else shaders[0].setUniform("showDepth", UniformType::BOOL, false);
 
     buffers[0].bind();
     buffers[0].draw();
@@ -145,22 +153,44 @@ void Renderer::render() {
     shaders[0].setUniform("transform", UniformType::MAT4, models[2].transform.getTransformMatrix());
     shaders[0].setUniform("view", UniformType::MAT4, camera.getViewMatrix());
     shaders[0].setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
-    shaders[0].setUniform("lightColor", UniformType::VEC3, models[1].getVerticesNoTex()[0].color);
+    shaders[0].setUniform("lightColor", UniformType::VEC3, models[1].getColor());
     shaders[0].setUniform("lightPos", UniformType::VEC3, models[1].getTransform().translationVec);
     shaders[0].setUniform("viewPos", UniformType::VEC3, camera.getPosition());
+    shaders[0].setUniform("color", UniformType::VEC3, models[2].getColor());
     shaders[0].setUniform("ambientStrength", UniformType::FLOAT, models[1].light.ambientStrength);
     shaders[0].setUniform("specularStrength", UniformType::FLOAT, models[1].light.specularStrength);
     shaders[0].setUniform("specularPower", UniformType::INT, models[1].light.specularPower);
     shaders[0].setUniform("useTexture", UniformType::BOOL, false);
+    if (showDepth) shaders[0].setUniform("showDepth", UniformType::BOOL, true);
+    else shaders[0].setUniform("showDepth", UniformType::BOOL, false);
 
     buffers[2].bind();
     buffers[2].draw();
+
+    shaders[0].use();
+    shaders[0].setUniform("transform", UniformType::MAT4, models[3].transform.getTransformMatrix());
+    shaders[0].setUniform("view", UniformType::MAT4, camera.getViewMatrix());
+    shaders[0].setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
+    shaders[0].setUniform("lightColor", UniformType::VEC3, models[1].getColor());
+    shaders[0].setUniform("lightPos", UniformType::VEC3, models[1].getTransform().translationVec);
+    shaders[0].setUniform("viewPos", UniformType::VEC3, camera.getPosition());
+    shaders[0].setUniform("color", UniformType::VEC3, models[3].getColor());
+    shaders[0].setUniform("ambientStrength", UniformType::FLOAT, models[1].light.ambientStrength);
+    shaders[0].setUniform("specularStrength", UniformType::FLOAT, models[1].light.specularStrength);
+    shaders[0].setUniform("specularPower", UniformType::INT, models[1].light.specularPower);
+    shaders[0].setUniform("useTexture", UniformType::BOOL, false);
+    if (showDepth) shaders[0].setUniform("showDepth", UniformType::BOOL, true);
+    else shaders[0].setUniform("showDepth", UniformType::BOOL, false);
+
+    buffers[3].bind();
+    buffers[3].draw();
 
     shaders[1].use();
     shaders[1].setUniform("transform", UniformType::MAT4, models[1].transform.getTransformMatrix());
     shaders[1].setUniform("view", UniformType::MAT4, camera.getViewMatrix());
     shaders[1].setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
-    shaders[1].setUniform("lightColor", UniformType::VEC3, models[1].getVerticesNoTex()[0].color);
+    shaders[1].setUniform("lightColor", UniformType::VEC3, models[1].getColor());
+    shaders[1].setUniform("opaqueVal", UniformType::FLOAT, models[1].getOpaqueVal());
 
     buffers[1].bind();  
     buffers[1].draw();
@@ -249,7 +279,11 @@ void Renderer::initModels() {
     floor.getTransform().translationVec = glm::vec3(0.0f, -0.5f, 0.0f);
     floor.getTransform().scaleVec = glm::vec3(10.0f, 10.0f, 10.0f);
     floor.getTransform().rotationVec = glm::vec3(90.0f, 0.0f, 0.0f);
+    //floor.color = {0.2f, 0.2f, 0.2f};
     models.push_back(floor);
+    Model dragon;
+    dragon.loadModel("../assets/models/dragon.obj");
+    models.push_back(dragon);
 }
 
 void Renderer::initBuffers() {
@@ -258,9 +292,8 @@ void Renderer::initBuffers() {
     VAOConfigInfo simpleBufferConfig{};
     simpleBufferConfig.attributes = {
         {0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, pos)},
-        {1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, color)},
-        {2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, normal)},
-        {3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, texCoord)}
+        {1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, normal)},
+        {2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, texCoord)}
     };
     simpleBufferConfig.sizeOfVertex = sizeof(Vertex);
     simpleBufferConfig.sizeOfVertexData = simpleBufferConfig.sizeOfVertex * models[0].getVertices().size();
@@ -277,7 +310,6 @@ void Renderer::initBuffers() {
     VAOConfigInfo lightBufferConfig{};
     lightBufferConfig.attributes = {
         {0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexNoTex), offsetof(VertexNoTex, pos)},
-        {1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexNoTex), offsetof(VertexNoTex, color)},
         {2, 3, GL_FLOAT, GL_FALSE, sizeof(VertexNoTex), offsetof(VertexNoTex, normal)}
     };
     lightBufferConfig.sizeOfVertex = sizeof(VertexNoTex);
@@ -294,9 +326,8 @@ void Renderer::initBuffers() {
     VAOConfigInfo floorBufferConfig{};
     floorBufferConfig.attributes = {
         {0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, pos)},
-        {1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, color)},
-        {2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, normal)},
-        {3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, texCoord)}
+        {1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, normal)},
+        {2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, texCoord)}
     };
     floorBufferConfig.sizeOfVertex = sizeof(Vertex);
     floorBufferConfig.sizeOfVertexData = floorBufferConfig.sizeOfVertex * models[2].getVertices().size();
@@ -306,6 +337,24 @@ void Renderer::initBuffers() {
     floorBufferConfig.drawMode = GL_TRIANGLES;
     floorBuffer.init(models[2].getVertices().data(), models[2].getIndices().data(), floorBufferConfig);
     buffers.push_back(floorBuffer);
+
+    // buffer for dragon
+    Buffer dragonBuffer;
+    VAOConfigInfo dragonBufferConfig{};
+    dragonBufferConfig.attributes = {
+        {0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, pos)},
+        {1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, normal)},
+        {2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, texCoord)}
+    };
+    dragonBufferConfig.sizeOfVertex = sizeof(Vertex);
+    dragonBufferConfig.sizeOfVertexData = dragonBufferConfig.sizeOfVertex * models[3].getVertices().size();
+    dragonBufferConfig.verticesCount = models[3].getVertices().size();
+    dragonBufferConfig.indexCount = models[3].getIndices().size();
+    dragonBufferConfig.useEBO = true;
+    dragonBufferConfig.drawMode = GL_TRIANGLES;
+
+    dragonBuffer.init(models[3].getVertices().data(), models[3].getIndices().data(), dragonBufferConfig);
+    buffers.push_back(dragonBuffer);
 }
 
 void Renderer::framebuffer_size_callback(GLFWwindow* window, int width, int height) {

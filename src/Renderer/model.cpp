@@ -3,8 +3,31 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tiny_obj_loader.h"
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
+
+#include <unordered_map>
 #include <iostream>
 #include <stdexcept>
+
+template <typename T, typename... Rest>
+void hashCombine(std::size_t& seed, const T& v, const Rest&... rest) {
+  seed ^= std::hash<T>{}(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  (hashCombine(seed, rest), ...);
+};
+
+namespace std {
+    template <> struct hash<Vertex> {
+        size_t operator()(Vertex const& vertex) const {
+            size_t seed = 0;
+            hashCombine(seed, vertex.pos, vertex.normal, vertex.texCoord);
+            return seed;
+        }
+    };
+}
 
 Model::Model() {}
 Model::~Model() {}
@@ -30,61 +53,64 @@ void Model::loadTexture(const std::string& path) {
 
 void Model::simpleTriangle() {
     vertices = {
-        {{0.0f, 0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.5f, 1.0f}},
-        {{-0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
-        {{0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}}
+        {{0.0f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.5f, 1.0f}},
+        {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
+        {{0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}}
     };
     indices = { 2, 1, 0 };
 }
 
 void Model::simpleQuad() {
     vertices = {
-        {{0.5f, 0.5f, 0.0f}, {0.2f, 0.2f, 0.2f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-        {{0.5f, -0.5f, 0.0f}, {0.2f, 0.2f, 0.2f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
-        {{-0.5f, -0.5f, 0.0f}, {0.2f, 0.2f, 0.2f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
-        {{-0.5f, 0.5f, 0.0f}, {0.2f, 0.2f, 0.2f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}
+        {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}},
+        {{0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}},
+        {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}},
+        {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}}
     };
     indices = {0, 1, 3,
                1, 2, 3};
+
+    indices = {3, 1, 0,
+               3, 2, 1};
 }
 
 void Model::simpleCube() {
     verticesNoTex = {
         // Front face (normal: 0.0f, 0.0f, -1.0f)
-        {{-0.5f, -0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, -1.0f}}, // 0
-        {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, -1.0f}},  // 1
-        {{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}},  // 2
-        {{0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, -1.0f}},   // 3
+        {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}}, // 0
+        {{0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}},  // 1
+        {{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}},  // 2
+        {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}},   // 3
 
         // Back face (normal: 0.0f, 0.0f, 1.0f)
-        {{-0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},   // 4
-        {{0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},    // 5
-        {{-0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},    // 6
-        {{0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},     // 7
+        {{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},   // 4
+        {{0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},    // 5
+        {{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},    // 6
+        {{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},     // 7
 
         // Right face (normal: 1.0f, 0.0f, 0.0f)
-        {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},  // (re-using vertex 1)
-        {{0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},   // (re-using vertex 3)
-        {{0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},    // (re-using vertex 5)
-        {{0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},     // (re-using vertex 7)
+        {{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},  // (re-using vertex 1)
+        {{0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},   // (re-using vertex 3)
+        {{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}},    // (re-using vertex 5)
+        {{0.5f, 0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}},     // (re-using vertex 7)
 
         // Left face (normal: -1.0f, 0.0f, 0.0f)
-        {{-0.5f, -0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}}, // (re-using vertex 0)
-        {{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}},  // (re-using vertex 2)
-        {{-0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}},  // (re-using vertex 4)
-        {{-0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}},   // (re-using vertex 6)
+        {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}}, // (re-using vertex 0)
+        {{-0.5f, 0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}},  // (re-using vertex 2)
+        {{-0.5f, -0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}},  // (re-using vertex 4)
+        {{-0.5f, 0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}},   // (re-using vertex 6)
 
         // Top face (normal: 0.0f, 1.0f, 0.0f)
-        {{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},   // (re-using vertex 2)
-        {{0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},    // (re-using vertex 3)
-        {{-0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},    // (re-using vertex 6)
-        {{0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},     // (re-using vertex 7)
+        {{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},   // (re-using vertex 2)
+        {{0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},    // (re-using vertex 3)
+        {{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},    // (re-using vertex 6)
+        {{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},     // (re-using vertex 7)
 
         // Bottom face (normal: 0.0f, -1.0f, 0.0f)
-        {{-0.5f, -0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, -1.0f, 0.0f}},// (re-using vertex 0)
-        {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}}, // (re-using vertex 1)
-        {{-0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}, {0.0f, -1.0f, 0.0f}}, // (re-using vertex 4)
-        {{0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 1.0f}, {0.0f, -1.0f, 0.0f}}   // (re-using vertex 5)
+        {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}},// (re-using vertex 0)
+        {{0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}}, // (re-using vertex 1)
+        {{-0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}, // (re-using vertex 4)
+        {{0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}}   // (re-using vertex 5)
     };
 
     indices = {
@@ -106,52 +132,52 @@ void Model::simpleCube() {
 void Model::texturedCube() {
     vertices = {
         // Back face
-        {{-0.5f, -0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}},
-        {{0.5f, -0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}},
-        {{0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}},
-        {{0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}},
-        {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}},
-        {{-0.5f, -0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}},
+        {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}},
+        {{0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}},
+        {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}},
+        {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}},
+        {{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}},
+        {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}},
 
         // Front face
-        {{-0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
-        {{0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
-        {{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-        {{0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-        {{-0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-        {{-0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
+        {{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
+        {{0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
+        {{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+        {{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+        {{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+        {{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
 
         // Left face
-        {{-0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.0f}, {-1.0, 0.0, 0.0}, {1.0f, 0.0f}},
-        {{-0.5f, 0.5f, -0.5f}, {0.5f, 0.5f, 0.0f}, {-1.0, 0.0, 0.0}, {1.0f, 1.0f}},
-        {{-0.5f, -0.5f, -0.5f}, {0.5f, 0.5f, 0.0f}, {-1.0, 0.0, 0.0}, {0.0f, 1.0f}},
-        {{-0.5f, -0.5f, -0.5f}, {0.5f, 0.5f, 0.0f}, {-1.0, 0.0, 0.0}, {0.0f, 1.0f}},
-        {{-0.5f, -0.5f, 0.5f}, {0.5f, 0.5f, 0.0f}, {-1.0, 0.0, 0.0}, {0.0f, 0.0f}},
-        {{-0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.0f}, {-1.0, 0.0, 0.0}, {1.0f, 0.0f}},
+        {{-0.5f, 0.5f, 0.5f}, {-1.0, 0.0, 0.0}, {1.0f, 0.0f}},
+        {{-0.5f, 0.5f, -0.5f}, {-1.0, 0.0, 0.0}, {1.0f, 1.0f}},
+        {{-0.5f, -0.5f, -0.5f}, {-1.0, 0.0, 0.0}, {0.0f, 1.0f}},
+        {{-0.5f, -0.5f, -0.5f}, {-1.0, 0.0, 0.0}, {0.0f, 1.0f}},
+        {{-0.5f, -0.5f, 0.5f}, {-1.0, 0.0, 0.0}, {0.0f, 0.0f}},
+        {{-0.5f, 0.5f, 0.5f}, {-1.0, 0.0, 0.0}, {1.0f, 0.0f}},
 
         // Right face
-        {{0.5f, 0.5f, 0.5f}, {0.2f, 0.8f, 0.5f}, {1.0, 0.0, 0.0}, {1.0f, 0.0f}},
-        {{0.5f, 0.5f, -0.5f}, {0.2f, 0.8f, 0.5f}, {1.0, 0.0, 0.0}, {1.0f, 1.0f}},
-        {{0.5f, -0.5f, -0.5f}, {0.2f, 0.8f, 0.5f}, {1.0, 0.0, 0.0}, {0.0f, 1.0f}},
-        {{0.5f, -0.5f, -0.5f}, {0.2f, 0.8f, 0.5f}, {1.0, 0.0, 0.0}, {0.0f, 1.0f}},
-        {{0.5f, -0.5f, 0.5f}, {0.2f, 0.8f, 0.5f}, {1.0, 0.0, 0.0}, {0.0f, 0.0f}},
-        {{0.5f, 0.5f, 0.5f}, {0.2f, 0.8f, 0.5f}, {1.0, 0.0, 0.0}, {1.0f, 0.0f}},
+        {{0.5f, 0.5f, 0.5f}, {1.0, 0.0, 0.0}, {1.0f, 0.0f}},
+        {{0.5f, 0.5f, -0.5f}, {1.0, 0.0, 0.0}, {1.0f, 1.0f}},
+        {{0.5f, -0.5f, -0.5f}, {1.0, 0.0, 0.0}, {0.0f, 1.0f}},
+        {{0.5f, -0.5f, -0.5f}, {1.0, 0.0, 0.0}, {0.0f, 1.0f}},
+        {{0.5f, -0.5f, 0.5f}, {1.0, 0.0, 0.0}, {0.0f, 0.0f}},
+        {{0.5f, 0.5f, 0.5f}, {1.0, 0.0, 0.0}, {1.0f, 0.0f}},
 
         // Bottom face
-        {{-0.5f, -0.5f, -0.5f}, {0.7f, 0.7f, 0.7f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}},
-        {{0.5f, -0.5f, -0.5f}, {0.7f, 0.7f, 0.7f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}},
-        {{0.5f, -0.5f, 0.5f}, {0.7f, 0.7f, 0.7f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, -0.5f, 0.5f}, {0.7f, 0.7f, 0.7f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
-        {{-0.5f, -0.5f, 0.5f}, {0.7f, 0.7f, 0.7f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{-0.5f, -0.5f, -0.5f}, {0.7f, 0.7f, 0.7f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}},
+        {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}},
+        {{0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}},
+        {{0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{-0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}},
 
         // Top face
-        {{-0.5f, 0.5f, -0.5f}, {0.9f, 0.4f, 0.3f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
-        {{0.5f, 0.5f, -0.5f}, {0.9f, 0.4f, 0.3f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
-        {{0.5f, 0.5f, 0.5f}, {0.9f, 0.4f, 0.3f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, 0.5f, 0.5f}, {0.9f, 0.4f, 0.3f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-        {{-0.5f, 0.5f, 0.5f}, {0.9f, 0.4f, 0.3f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{-0.5f, 0.5f, -0.5f}, {0.9f, 0.4f, 0.3f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
+        {{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
+        {{0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
+        {{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},
     };
 
     indices = {
@@ -162,4 +188,57 @@ void Model::texturedCube() {
         24, 25, 26, 27, 28, 29, // Bottom face
         30, 31, 32, 33, 34, 35  // Top face
     };
+}
+
+void Model::sphereNoTex() {
+
+}
+
+void Model::loadModel(const std::string& path) {
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warn, err;
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str())) {
+        throw std::runtime_error("TinyObj failed to load objects ==> " + warn + err);
+    }
+    vertices.clear();
+    indices.clear();
+
+    std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+
+    for (const auto& shape : shapes) {
+        for (const auto& index : shape.mesh.indices) {
+            Vertex vertex{};
+
+            if (index.vertex_index >= 0) {
+                vertex.pos = {
+                    attrib.vertices[3 * index.vertex_index + 0],
+                    attrib.vertices[3 * index.vertex_index + 1],
+                    attrib.vertices[3 * index.vertex_index + 2],
+                };
+            }
+
+            if (index.normal_index >= 0) {
+                vertex.normal = {
+                    attrib.normals[3 * index.normal_index + 0],
+                    attrib.normals[3 * index.normal_index + 1],
+                    attrib.normals[3 * index.normal_index + 2],
+                };
+            }
+
+            if (index.texcoord_index >= 0) {
+                vertex.texCoord = {
+                    attrib.texcoords[2 * index.texcoord_index + 0],
+                    attrib.texcoords[2 * index.texcoord_index + 1],
+                };
+            }
+            // TODO: have a better hashing for unique values when loading .obj files
+            if (uniqueVertices.count(vertex) == 0) {
+                uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                vertices.push_back(vertex);
+            }
+            indices.push_back(uniqueVertices[vertex]);
+        }
+    }
 }

@@ -16,19 +16,24 @@
 
 struct Vertex {
     glm::vec3 pos;
-    glm::vec3 color;
+    //glm::vec3 color;
     glm::vec3 normal;
     glm::vec2 texCoord;
+
+    bool operator==(const Vertex& other) const {
+        return pos == other.pos && normal == other.normal && texCoord == other.texCoord;
+    }
 };
 struct VertexNoTex {
     glm::vec3 pos;
-    glm::vec3 color;
+    //glm::vec3 color;
     glm::vec3 normal;
 };
 struct Light {
     float ambientStrength = 0.1f;
     float specularStrength = 0.5f;
     int specularPower = 32;
+    float opaqueVal = 0.9;
 };
 struct Transform {
     glm::vec3 translationVec = glm::vec3(0.0f);
@@ -59,6 +64,7 @@ public:
     std::vector<uint32_t> indices;
     Transform transform{};
     Light light{};
+    glm::vec3 color = glm::vec3(1.0f);
 
     Model();
     ~Model();
@@ -70,13 +76,17 @@ public:
     void simpleQuad();
     void simpleCube();
     void texturedCube();
+    void sphereNoTex();
     void loadTexture(const std::string& path);
+    void loadModel(const std::string& path);
 
     std::vector<Vertex>& getVertices() {return vertices;}
     std::vector<VertexNoTex>& getVerticesNoTex() {return verticesNoTex;}
     std::vector<uint32_t>& getIndices() {return indices;}
     Transform& getTransform() {return transform;}
     Light& getLight() {return light;}
+    glm::vec3& getColor() {return color;}
+    float& getOpaqueVal() {return light.opaqueVal;}
 };
 
 #endif // MODEL_HPP
