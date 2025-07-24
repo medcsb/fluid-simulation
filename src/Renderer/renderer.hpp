@@ -17,6 +17,7 @@
 #include "stb_image.h"
 
 #include <iostream>
+#include <memory>
 
 // using OpenGL 4.6
 const int OPENGL_VERSION_MAJOR = 4;
@@ -24,6 +25,12 @@ const int OPENGL_VERSION_MINOR = 5;
 
 extern const char *vertexShaderSource;
 extern const char *fragmentShaderSource;
+
+struct Renderable {
+    std::shared_ptr<Shader> shader;
+    std::shared_ptr<Buffer> buffer;
+    std::shared_ptr<Model> model;
+};
 
 class Renderer {
 private:

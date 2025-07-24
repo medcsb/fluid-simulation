@@ -16,6 +16,7 @@ uniform vec3 color;
 uniform float ambientStrength;
 uniform float specularStrength;
 uniform int specularPower;
+uniform float attenuationFactor;
 uniform bool useTexture;
 uniform bool showDepth;
 
@@ -35,17 +36,28 @@ void main() {
     vec3 norm = normalize(vertNormal);
     vec3 directionToLight = lightPos - vertPos;
     float dist2 = dot(directionToLight, directionToLight);
-    float attenuation = 1.0 / dist2;
+    float attenuation = attenuationFactor / sqrt(dist2);
     vec3 lightDir = normalize(directionToLight);
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = diff * lightColor * attenuation;
-    vec3 ambient = ambientStrength * lightColor * attenuation;
 
     // specular
     vec3 viewDir = normalize(viewPos - vertPos);
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), specularPower);
-    vec3 specular = specularStrength * spec * lightColor * attenuation;
+
+    vec3 ambient = vec3(1.0, 1.0, 1.0) * lightColor * ambientStrength * attenuationFactor;
+    vec3 diffuse = vec3(1.0, 1.0, 1.0) * lightPos * specularStrength;
+    vec3 specular = vec3(1.0, 1.0, 1.0) * viewPos * specularPower;
+
+    if (attenuationFactor == 0) {
+        diffuse = diff * lightColor;
+        ambient = ambientStrength * lightColor;
+        specular = specularStrength * spec * lightColor;
+    } else {
+        diffuse = diff * lightColor * attenuation;
+        ambient = ambientStrength * lightColor * attenuation;
+        specular = specularStrength * spec * lightColor * attenuation;
+    }
 
     vec3 result = (ambient + diffuse + specular) * color;
 

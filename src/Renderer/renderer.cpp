@@ -32,6 +32,8 @@ void Renderer::init() {
     initBuffers();
     camera.init(static_cast<float>(width), static_cast<float>(height));
     glEnable(GL_DEPTH_TEST); // Enable depth testing for 3D rendering
+    glEnable(GL_CULL_FACE); // Enable face culling
+    glCullFace(GL_BACK); // Cull back faces
     glEnable(GL_BLEND); // Enable blending for transparency
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
     frameTime = static_cast<float>(glfwGetTime());
@@ -89,6 +91,7 @@ void Renderer::render() {
     ImGui::DragFloat("Specular Strength", &models[1].light.specularStrength, 0.1f, 0.0f, 10.0f);
     ImGui::DragInt("Specular Power", &models[1].light.specularPower, 1.0f, 1, 360);
     ImGui::DragFloat("opaque Value", &models[1].getOpaqueVal(), 0.01, 0.0, 1.0);
+    ImGui::DragFloat("Attenuation Factor", &models[1].light.attenuationFactor, 0.01f, 0.0f, 10.0f);
     ImGui::DragFloat3("Position", glm::value_ptr(models[1].getTransform().translationVec), 0.01f);
     ImGui::DragFloat3("Rotation", glm::value_ptr(models[1].getTransform().rotationVec), 1.0f);
     ImGui::DragFloat3("Scale", glm::value_ptr(models[1].getTransform().scaleVec), 0.01f, 0.1f, 10.0f);
@@ -142,6 +145,7 @@ void Renderer::render() {
     shaders[0].setUniform("ambientStrength", UniformType::FLOAT, models[1].light.ambientStrength);
     shaders[0].setUniform("specularStrength", UniformType::FLOAT, models[1].light.specularStrength);
     shaders[0].setUniform("specularPower", UniformType::INT, models[1].light.specularPower);
+    shaders[0].setUniform("attenuationFactor", UniformType::FLOAT, models[1].light.attenuationFactor);
     shaders[0].setUniform("useTexture", UniformType::BOOL, true);
     if (showDepth) shaders[0].setUniform("showDepth", UniformType::BOOL, true);
     else shaders[0].setUniform("showDepth", UniformType::BOOL, false);
@@ -160,6 +164,7 @@ void Renderer::render() {
     shaders[0].setUniform("ambientStrength", UniformType::FLOAT, models[1].light.ambientStrength);
     shaders[0].setUniform("specularStrength", UniformType::FLOAT, models[1].light.specularStrength);
     shaders[0].setUniform("specularPower", UniformType::INT, models[1].light.specularPower);
+    shaders[0].setUniform("attenuationFactor", UniformType::FLOAT, models[1].light.attenuationFactor);
     shaders[0].setUniform("useTexture", UniformType::BOOL, false);
     if (showDepth) shaders[0].setUniform("showDepth", UniformType::BOOL, true);
     else shaders[0].setUniform("showDepth", UniformType::BOOL, false);

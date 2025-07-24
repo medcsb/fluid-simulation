@@ -34,6 +34,7 @@ struct Light {
     float specularStrength = 0.5f;
     int specularPower = 32;
     float opaqueVal = 0.9;
+    float attenuationFactor = 1.0f;
 };
 struct Transform {
     glm::vec3 translationVec = glm::vec3(0.0f);
