@@ -36,6 +36,14 @@ void Model::bindTexture() {
     glBindTexture(GL_TEXTURE_2D, texture);
 }
 
+void Model::setTextureParams(GLenum wrapS, GLenum wrapT, GLenum minFilter, GLenum magFilter) {
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
+}
+
 void Model::loadTexture(const std::string& path) {
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);

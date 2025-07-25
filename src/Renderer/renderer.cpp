@@ -32,6 +32,8 @@ void Renderer::init() {
     initBuffers();
     camera.init(static_cast<float>(width), static_cast<float>(height));
     glEnable(GL_DEPTH_TEST); // Enable depth testing for 3D rendering
+    // gamma correction
+    //glEnable(GL_FRAMEBUFFER_SRGB);
     glEnable(GL_CULL_FACE); // Enable face culling
     glCullFace(GL_BACK); // Cull back faces
     glEnable(GL_BLEND); // Enable blending for transparency
@@ -87,6 +89,7 @@ void Renderer::render() {
 
     ImGui::Begin("Light Editor");
     ImGui::ColorEdit3("Color", glm::value_ptr(models[1].getColor()), ImGuiColorEditFlags_NoInputs);
+    ImGui::DragFloat("gamma", &gamma, 0.01f, 1.0f, 3.0f);
     ImGui::DragFloat("Ambient Strength", &models[1].light.ambientStrength, 0.01f, 0.0f, 1.0f);
     ImGui::DragFloat("Specular Strength", &models[1].light.specularStrength, 0.1f, 0.0f, 10.0f);
     ImGui::DragInt("Specular Power", &models[1].light.specularPower, 1.0f, 1, 360);
@@ -132,8 +135,9 @@ void Renderer::render() {
     //glBindBuffer(GL_ARRAY_BUFFER, VBO);
     //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertex) * model.getVertices().size(), model.getVertices().data());
 
-    //models[0].bindTexture();
+    models[0].bindTexture();
 
+    // cube
     shaders[0].use();
     shaders[0].setUniform("transform", UniformType::MAT4, models[0].transform.getTransformMatrix());
     shaders[0].setUniform("view", UniformType::MAT4, camera.getViewMatrix());
@@ -147,12 +151,16 @@ void Renderer::render() {
     shaders[0].setUniform("specularPower", UniformType::INT, models[1].light.specularPower);
     shaders[0].setUniform("attenuationFactor", UniformType::FLOAT, models[1].light.attenuationFactor);
     shaders[0].setUniform("useTexture", UniformType::BOOL, true);
+    shaders[0].setUniform("gamma", UniformType::FLOAT, gamma);
     if (showDepth) shaders[0].setUniform("showDepth", UniformType::BOOL, true);
     else shaders[0].setUniform("showDepth", UniformType::BOOL, false);
 
     buffers[0].bind();
     buffers[0].draw();
 
+    models[2].bindTexture();
+
+    // floor
     shaders[0].use();
     shaders[0].setUniform("transform", UniformType::MAT4, models[2].transform.getTransformMatrix());
     shaders[0].setUniform("view", UniformType::MAT4, camera.getViewMatrix());
@@ -165,13 +173,15 @@ void Renderer::render() {
     shaders[0].setUniform("specularStrength", UniformType::FLOAT, models[1].light.specularStrength);
     shaders[0].setUniform("specularPower", UniformType::INT, models[1].light.specularPower);
     shaders[0].setUniform("attenuationFactor", UniformType::FLOAT, models[1].light.attenuationFactor);
-    shaders[0].setUniform("useTexture", UniformType::BOOL, false);
+    shaders[0].setUniform("useTexture", UniformType::BOOL, true);
+    shaders[0].setUniform("gamma", UniformType::FLOAT, gamma);
     if (showDepth) shaders[0].setUniform("showDepth", UniformType::BOOL, true);
     else shaders[0].setUniform("showDepth", UniformType::BOOL, false);
 
     buffers[2].bind();
     buffers[2].draw();
 
+    // dragon
     shaders[0].use();
     shaders[0].setUniform("transform", UniformType::MAT4, models[3].transform.getTransformMatrix());
     shaders[0].setUniform("view", UniformType::MAT4, camera.getViewMatrix());
@@ -184,12 +194,14 @@ void Renderer::render() {
     shaders[0].setUniform("specularStrength", UniformType::FLOAT, models[1].light.specularStrength);
     shaders[0].setUniform("specularPower", UniformType::INT, models[1].light.specularPower);
     shaders[0].setUniform("useTexture", UniformType::BOOL, false);
+    shaders[0].setUniform("attenuationFactor", UniformType::FLOAT, models[1].light.attenuationFactor);
     if (showDepth) shaders[0].setUniform("showDepth", UniformType::BOOL, true);
     else shaders[0].setUniform("showDepth", UniformType::BOOL, false);
 
     buffers[3].bind();
     buffers[3].draw();
 
+    // light
     shaders[1].use();
     shaders[1].setUniform("transform", UniformType::MAT4, models[1].transform.getTransformMatrix());
     shaders[1].setUniform("view", UniformType::MAT4, camera.getViewMatrix());
@@ -272,6 +284,7 @@ void Renderer::initShaders() {
 void Renderer::initModels() {
     Model cubeModel;
     cubeModel.texturedCube();
+    cubeModel.getTransform().translationVec = glm::vec3(-1.5f, 0.0f, -1.5f);
     cubeModel.loadTexture("../assets/textures/wood_container.jpg");
     models.push_back(cubeModel);
     Model light;
@@ -281,6 +294,12 @@ void Renderer::initModels() {
     models.push_back(light);
     Model floor;
     floor.simpleQuad();
+    floor.loadTexture("../assets/textures/brick_wall.jpg");
+    // scale texture coordinates to fit the floor
+    for (auto& vertex : floor.getVertices()) {
+        vertex.texCoord *= glm::vec2(10.0f, 10.0f); // Scale texture coordinates
+    }
+    floor.setTextureParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
     floor.getTransform().translationVec = glm::vec3(0.0f, -0.5f, 0.0f);
     floor.getTransform().scaleVec = glm::vec3(10.0f, 10.0f, 10.0f);
     floor.getTransform().rotationVec = glm::vec3(90.0f, 0.0f, 0.0f);
@@ -360,6 +379,10 @@ void Renderer::initBuffers() {
 
     dragonBuffer.init(models[3].getVertices().data(), models[3].getIndices().data(), dragonBufferConfig);
     buffers.push_back(dragonBuffer);
+}
+
+void addCubeMap(std::vector<std::string> faces) {
+
 }
 
 void Renderer::framebuffer_size_callback(GLFWwindow* window, int width, int height) {

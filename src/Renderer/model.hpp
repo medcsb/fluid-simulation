@@ -71,6 +71,7 @@ public:
     ~Model();
 
     void bindTexture();
+    void setTextureParams(GLenum wrapS = GL_REPEAT, GLenum wrapT = GL_REPEAT, GLenum minFilter = GL_LINEAR, GLenum magFilter = GL_LINEAR);
     void setTextureParams();
 
     void simpleTriangle();

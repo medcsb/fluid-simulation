@@ -27,9 +27,9 @@ extern const char *vertexShaderSource;
 extern const char *fragmentShaderSource;
 
 struct Renderable {
-    std::shared_ptr<Shader> shader;
-    std::shared_ptr<Buffer> buffer;
-    std::shared_ptr<Model> model;
+    Shader& shader;
+    Buffer& buffer;
+    Model& model;
 };
 
 class Renderer {
@@ -41,6 +41,8 @@ private:
     float frameTime = 0.0f;
     float lastFrame = 0.0f;
 
+    float gamma = 2.2f;
+
     uint32_t VBO, VAO, EBO;
     uint32_t texture_wall, texture_statue;
     
@@ -49,6 +51,7 @@ private:
     std::vector<Model> models;
     std::vector<Shader> shaders;
     std::vector<Buffer> buffers;
+    std::vector<Renderable> renderables;
 
     // cameara controller ImGui
     bool isPerspective = true;
@@ -74,6 +77,7 @@ private:
     void initShaders();
     void initModels();
     void initBuffers();
+    void addCubeMap(std::vector<std::string> faces);
 
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);  
 };
