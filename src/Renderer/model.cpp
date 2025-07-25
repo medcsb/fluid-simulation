@@ -33,6 +33,7 @@ Model::Model() {}
 Model::~Model() {}
 
 void Model::bindTexture() {
+    glActiveTexture(GL_TEXTURE0);    
     glBindTexture(GL_TEXTURE_2D, texture);
 }
 

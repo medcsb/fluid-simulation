@@ -45,10 +45,13 @@ float ShadowCalculation(vec4 posSpaceLight) {
     float closestDepth = texture(shadowMap, projCoords.xy).r;
     // Get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
+
+    vec3 normal = normalize(vertNormal);
+    vec3 lightDir = normalize(lightPos - vertPos);
     
     // Add bias to prevent shadow acne
-    float bias = 0.005;
-    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    float bias = max(0.0005 * (1.0 - dot(normal, lightDir)), 0.0005);  
+    float shadow = currentDepth - bias> closestDepth ? 1.0 : 0.0;
     
     return shadow;
 }

@@ -35,7 +35,7 @@ void Renderer::init() {
     glEnable(GL_DEPTH_TEST); // Enable depth testing for 3D rendering
     // gamma correction
     //glEnable(GL_FRAMEBUFFER_SRGB);
-    //glEnable(GL_CULL_FACE); // Enable face culling
+    glEnable(GL_CULL_FACE); // Enable face culling
     //glCullFace(GL_BACK); // Cull back faces
     glEnable(GL_BLEND); // Enable blending for transparency
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
@@ -47,7 +47,9 @@ void Renderer::render() {
     frameTime = static_cast<float>(glfwGetTime()) - lastFrame;
     lastFrame = static_cast<float>(glfwGetTime());
 
+    glCullFace(GL_FRONT);
     renderShadowMap();
+    glCullFace(GL_BACK);
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
