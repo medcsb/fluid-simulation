@@ -46,6 +46,7 @@ void Model::setTextureParams(GLenum wrapS, GLenum wrapT, GLenum minFilter, GLenu
 
 void Model::loadTexture(const std::string& path) {
     glGenTextures(1, &texture);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
 
     int width, height, nrChannels;

@@ -43,6 +43,11 @@ private:
 
     float gamma = 2.2f;
 
+    GLuint shadowMapFBO;
+    GLuint shadowMap;
+    uint32_t shadow_width = 1024, shadow_height = 1024;
+    glm::mat4 lightSpaceMatrix;
+
     uint32_t VBO, VAO, EBO;
     uint32_t texture_wall, texture_statue;
     
@@ -77,6 +82,11 @@ private:
     void initShaders();
     void initModels();
     void initBuffers();
+    void initShadowMap();
+
+    void renderShadowMap();
+
+    void calculateLightSpaceMatrix();
     void addCubeMap(std::vector<std::string> faces);
 
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);  

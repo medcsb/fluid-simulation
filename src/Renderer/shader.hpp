@@ -33,6 +33,8 @@ public:
 
     void deleteProgram() {glDeleteProgram(ID);}
 
+    uint32_t getID() const {return ID;}
+
 private:
     void createProgram();
     void compileShader(const std::string& code, uint32_t shaderType, uint32_t& shaderID);

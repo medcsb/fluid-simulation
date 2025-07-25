@@ -30,12 +30,13 @@ void Renderer::init() {
     initShaders();
     initModels();
     initBuffers();
+    initShadowMap();
     camera.init(static_cast<float>(width), static_cast<float>(height));
     glEnable(GL_DEPTH_TEST); // Enable depth testing for 3D rendering
     // gamma correction
     //glEnable(GL_FRAMEBUFFER_SRGB);
-    glEnable(GL_CULL_FACE); // Enable face culling
-    glCullFace(GL_BACK); // Cull back faces
+    //glEnable(GL_CULL_FACE); // Enable face culling
+    //glCullFace(GL_BACK); // Cull back faces
     glEnable(GL_BLEND); // Enable blending for transparency
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
     frameTime = static_cast<float>(glfwGetTime());
@@ -45,6 +46,8 @@ void Renderer::render() {
 
     frameTime = static_cast<float>(glfwGetTime()) - lastFrame;
     lastFrame = static_cast<float>(glfwGetTime());
+
+    renderShadowMap();
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -142,6 +145,7 @@ void Renderer::render() {
     shaders[0].setUniform("transform", UniformType::MAT4, models[0].transform.getTransformMatrix());
     shaders[0].setUniform("view", UniformType::MAT4, camera.getViewMatrix());
     shaders[0].setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
+    shaders[0].setUniform("lightSpaceMatrix", UniformType::MAT4, lightSpaceMatrix);
     shaders[0].setUniform("lightColor", UniformType::VEC3, models[1].getColor());
     shaders[0].setUniform("lightPos", UniformType::VEC3, models[1].getTransform().translationVec);
     shaders[0].setUniform("viewPos", UniformType::VEC3, camera.getPosition());
@@ -154,6 +158,10 @@ void Renderer::render() {
     shaders[0].setUniform("gamma", UniformType::FLOAT, gamma);
     if (showDepth) shaders[0].setUniform("showDepth", UniformType::BOOL, true);
     else shaders[0].setUniform("showDepth", UniformType::BOOL, false);
+    glUniform1i(glGetUniformLocation(shaders[0].getID(), "texture1"), 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, shadowMap);
+    glUniform1i(glGetUniformLocation(shaders[0].getID(), "shadowMap"), 1);
 
     buffers[0].bind();
     buffers[0].draw();
@@ -165,6 +173,7 @@ void Renderer::render() {
     shaders[0].setUniform("transform", UniformType::MAT4, models[2].transform.getTransformMatrix());
     shaders[0].setUniform("view", UniformType::MAT4, camera.getViewMatrix());
     shaders[0].setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
+    shaders[0].setUniform("lightSpaceMatrix", UniformType::MAT4, lightSpaceMatrix);
     shaders[0].setUniform("lightColor", UniformType::VEC3, models[1].getColor());
     shaders[0].setUniform("lightPos", UniformType::VEC3, models[1].getTransform().translationVec);
     shaders[0].setUniform("viewPos", UniformType::VEC3, camera.getPosition());
@@ -177,6 +186,10 @@ void Renderer::render() {
     shaders[0].setUniform("gamma", UniformType::FLOAT, gamma);
     if (showDepth) shaders[0].setUniform("showDepth", UniformType::BOOL, true);
     else shaders[0].setUniform("showDepth", UniformType::BOOL, false);
+    glUniform1i(glGetUniformLocation(shaders[0].getID(), "texture1"), 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, shadowMap);
+    glUniform1i(glGetUniformLocation(shaders[0].getID(), "shadowMap"), 1);
 
     buffers[2].bind();
     buffers[2].draw();
@@ -186,6 +199,7 @@ void Renderer::render() {
     shaders[0].setUniform("transform", UniformType::MAT4, models[3].transform.getTransformMatrix());
     shaders[0].setUniform("view", UniformType::MAT4, camera.getViewMatrix());
     shaders[0].setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
+    shaders[0].setUniform("lightSpaceMatrix", UniformType::MAT4, lightSpaceMatrix);
     shaders[0].setUniform("lightColor", UniformType::VEC3, models[1].getColor());
     shaders[0].setUniform("lightPos", UniformType::VEC3, models[1].getTransform().translationVec);
     shaders[0].setUniform("viewPos", UniformType::VEC3, camera.getPosition());
@@ -197,6 +211,10 @@ void Renderer::render() {
     shaders[0].setUniform("attenuationFactor", UniformType::FLOAT, models[1].light.attenuationFactor);
     if (showDepth) shaders[0].setUniform("showDepth", UniformType::BOOL, true);
     else shaders[0].setUniform("showDepth", UniformType::BOOL, false);
+    glUniform1i(glGetUniformLocation(shaders[0].getID(), "texture1"), 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, shadowMap);
+    glUniform1i(glGetUniformLocation(shaders[0].getID(), "shadowMap"), 1);
 
     buffers[3].bind();
     buffers[3].draw();
@@ -272,13 +290,17 @@ void Renderer::initImGui() {
 }
 
 void Renderer::initShaders() {
-    Shader shader{"../shaders/vert.glsl", "../shaders/frag.glsl"};
+    Shader shader{"../shaders/simple_vert.glsl", "../shaders/simple_frag.glsl"};
     shader.init();
     shaders.push_back(shader);
 
-    Shader lightShader{"../shaders/lightvert.glsl", "../shaders/lightfrag.glsl"};
+    Shader lightShader{"../shaders/light_vert.glsl", "../shaders/light_frag.glsl"};
     lightShader.init();
     shaders.push_back(lightShader);
+
+    Shader shadowShader{"../shaders/shadow_vert.glsl", "../shaders/shadow_frag.glsl"};
+    shadowShader.init();
+    shaders.push_back(shadowShader);
 }
 
 void Renderer::initModels() {
@@ -381,7 +403,63 @@ void Renderer::initBuffers() {
     buffers.push_back(dragonBuffer);
 }
 
-void addCubeMap(std::vector<std::string> faces) {
+void Renderer::initShadowMap() {
+    glGenFramebuffers(1, &shadowMapFBO);
+
+    glGenTextures(1, &shadowMap);
+    glBindTexture(GL_TEXTURE_2D, shadowMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadow_width, shadow_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    GLfloat borderColor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap, 0);
+    glDrawBuffer(GL_NONE); // No color buffer is drawn
+    glReadBuffer(GL_NONE); // No color buffer is read
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Renderer::renderShadowMap() {
+    calculateLightSpaceMatrix();
+
+    glViewport(0, 0, shadow_width, shadow_height);
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    shaders[2].use();
+    shaders[2].setUniform("lightSpaceMatrix", UniformType::MAT4, lightSpaceMatrix);
+
+    // cube
+    shaders[2].setUniform("transform", UniformType::MAT4, models[0].transform.getTransformMatrix());
+    buffers[0].bind();
+    buffers[0].draw();
+
+    // floor
+    shaders[2].setUniform("transform", UniformType::MAT4, models[2].transform.getTransformMatrix());
+    buffers[2].bind();
+    buffers[2].draw();
+
+    // dragon
+    shaders[2].setUniform("transform", UniformType::MAT4, models[3].transform.getTransformMatrix());
+    buffers[3].bind();
+    buffers[3].draw();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Renderer::calculateLightSpaceMatrix() {
+    glm::vec3 lightPos = models[1].getTransform().translationVec;
+    float near_plane = 1.0f, far_plane = 20.0f;
+    glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+    glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    lightSpaceMatrix = lightProjection * lightView;
+}
+
+void Renderer::addCubeMap(std::vector<std::string> faces) {
 
 }
 

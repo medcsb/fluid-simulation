@@ -9,9 +9,12 @@ out vec3 vertPos;
 out vec3 vertNormal;
 out vec2 TexCoord;
 
+out vec4 fragPosLightSpace;
+
 uniform mat4 transform;
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat4 lightSpaceMatrix;
 
 void main() {
     gl_Position = projection * view * transform * vec4(aPos, 1.0); // see how we directly give a vec3 to vec4's constructor
@@ -19,4 +22,5 @@ void main() {
     //vertColor = aColor;
     vertNormal = mat3(transpose(inverse(transform))) * aNormal;
     TexCoord = vec2(aTexCoord.x, aTexCoord.y);
+    fragPosLightSpace = lightSpaceMatrix * vec4(vertPos, 1.0);
 }
