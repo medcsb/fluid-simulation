@@ -147,19 +147,19 @@ void Scene::initScene1Buffers() {
 }
 
 void Scene::initScene1Renderables() {
-    Renderable cubeRenderable{shaders[shaderMap["simple"]], buffers[bufferMap["cube"]], models[modelMap["cube"]]};
+    Renderable cubeRenderable{modelMap["cube"], shaderMap["simple"], bufferMap["cube"]};
     renderables.push_back(cubeRenderable);
     renderableMap["cube"] = renderables.size() - 1;
 
-    Renderable lightRenderable{shaders[shaderMap["light"]], buffers[bufferMap["light"]], models[modelMap["light"]]};
+    Renderable lightRenderable{modelMap["light"], shaderMap["light"], bufferMap["light"]};
     renderables.push_back(lightRenderable);
     renderableMap["light"] = renderables.size() - 1;
 
-    Renderable floorRenderable{shaders[shaderMap["simple"]], buffers[bufferMap["floor"]], models[modelMap["floor"]]};
+    Renderable floorRenderable{modelMap["floor"], shaderMap["simple"], bufferMap["floor"]};
     renderables.push_back(floorRenderable);
     renderableMap["floor"] = renderables.size() - 1;
 
-    Renderable dragonRenderable{shaders[shaderMap["simple"]], buffers[bufferMap["dragon"]], models[modelMap["dragon"]]};
+    Renderable dragonRenderable{modelMap["dragon"], shaderMap["simple"], bufferMap["dragon"]};
     renderables.push_back(dragonRenderable);
     renderableMap["dragon"] = renderables.size() - 1;
 }

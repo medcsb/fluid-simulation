@@ -7,12 +7,9 @@
 
 Renderer::Renderer() {}
 Renderer::~Renderer() {
-
-    for (auto& shader : scene.getShaders()) {
-        shader.cleanup();
-    }
-    for (auto& buffer : scene.getBuffers()) {
-        buffer.cleanup();
+    for (auto& scene : scenes) {
+        for (auto& shader : scene.getShaders()) shader.cleanup();
+        for (auto& buffer : scene.getBuffers()) buffer.cleanup();
     }
 
     glfwDestroyWindow(window);
@@ -23,24 +20,16 @@ void Renderer::init() {
     initWindow();
     initOpenGL();
     imguiUI.init(window, std::to_string(OPENGL_VERSION_MAJOR * 100 + OPENGL_VERSION_MINOR * 10));
-    scene.initExampleScene1();
+    initScenes();
     initShadowMap();
-    camera.init(static_cast<float>(width), static_cast<float>(height));
-    glEnable(GL_DEPTH_TEST); // Enable depth testing for 3D rendering
-    // gamma correction
-    //glEnable(GL_FRAMEBUFFER_SRGB);
-    glEnable(GL_CULL_FACE); // Enable face culling
-    //glCullFace(GL_BACK); // Cull back faces
-    glEnable(GL_BLEND); // Enable blending for transparency
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
-    frameTime = static_cast<float>(glfwGetTime());
+    initRenderStuff();
 }
 
 void Renderer::render() {
 
     imguiUI.beginRender();
     imguiUI.mainInfoBoard();
-    imguiUI.simpleScene(scene, camera, cameraController, gamma, isPerspective, showDepth);
+    imguiUI.simpleScene(scenes[currentSceneIdx], camera, cameraController, gamma, isPerspective, showDepth);
     imguiUI.render();
 
     if (isPerspective) {
@@ -62,25 +51,30 @@ void Renderer::render() {
     //glBindBuffer(GL_ARRAY_BUFFER, VBO);
     //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertex) * model.getVertices().size(), model.getVertices().data());
 
-    for (auto& obj : scene.getRenderables()) {
-        Shader& shader = obj.shader;
-        Buffer& buffer = obj.buffer;
-        Model& model = obj.model;
+    Scene& currentScene = scenes[currentSceneIdx];
+    std::vector<Model>& models = currentScene.getModels();
+    std::vector<Shader>& shaders = currentScene.getShaders();
+    std::vector<Buffer>& buffers = currentScene.getBuffers();
+
+    for (auto& obj : currentScene.getRenderables()) {
+        Shader& shader = shaders[obj.shaderIdx];
+        Buffer& buffer = buffers[obj.bufferIdx];
+        Model& model = models[obj.modelIdx];
         if (model.isTextured) model.bindTexture();
         shader.use();
         shader.setUniform("transform", UniformType::MAT4, model.transform.getTransformMatrix());
         shader.setUniform("view", UniformType::MAT4, camera.getViewMatrix());
         shader.setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
-        shader.setUniform("lightColor", UniformType::VEC3, scene.getModels()[scene.lightIdx].getColor());
+        shader.setUniform("lightColor", UniformType::VEC3, currentScene.getModels()[currentScene.lightIdx].getColor());
         if (shader.getName() == "simple") {
             shader.setUniform("lightSpaceMatrix", UniformType::MAT4, lightSpaceMatrix);
-            shader.setUniform("lightPos", UniformType::VEC3, scene.getModels()[scene.lightIdx].getTransform().translationVec);
+            shader.setUniform("lightPos", UniformType::VEC3, currentScene.getModels()[currentScene.lightIdx].getTransform().translationVec);
             shader.setUniform("viewPos", UniformType::VEC3, camera.getPosition());
             shader.setUniform("color", UniformType::VEC3, model.getColor());
-            shader.setUniform("ambientStrength", UniformType::FLOAT, scene.getModels()[scene.lightIdx].light.ambientStrength);
-            shader.setUniform("specularStrength", UniformType::FLOAT, scene.getModels()[scene.lightIdx].light.specularStrength);
-            shader.setUniform("specularPower", UniformType::INT, scene.getModels()[scene.lightIdx].light.specularPower);
-            shader.setUniform("attenuationFactor", UniformType::FLOAT, scene.getModels()[scene.lightIdx].light.attenuationFactor);
+            shader.setUniform("ambientStrength", UniformType::FLOAT, currentScene.getModels()[currentScene.lightIdx].light.ambientStrength);
+            shader.setUniform("specularStrength", UniformType::FLOAT, currentScene.getModels()[currentScene.lightIdx].light.specularStrength);
+            shader.setUniform("specularPower", UniformType::INT, currentScene.getModels()[currentScene.lightIdx].light.specularPower);
+            shader.setUniform("attenuationFactor", UniformType::FLOAT, currentScene.getModels()[currentScene.lightIdx].light.attenuationFactor);
             shader.setUniform("useTexture", UniformType::BOOL, model.isTextured);
             shader.setUniform("gamma", UniformType::FLOAT, gamma);
             if (showDepth) shader.setUniform("showDepth", UniformType::BOOL, true);
@@ -130,6 +124,12 @@ void Renderer::initOpenGL() {
     glfwSetFramebufferSizeCallback(window, Renderer::framebuffer_size_callback);
 }
 
+void Renderer::initScenes() {
+    Scene scene1;
+    scene1.initExampleScene1();
+    scenes.push_back(scene1);
+}
+
 void Renderer::initShadowMap() {
     glGenFramebuffers(1, &shadowMapFBO);
 
@@ -150,6 +150,18 @@ void Renderer::initShadowMap() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void Renderer::initRenderStuff() {
+    camera.init(static_cast<float>(width), static_cast<float>(height));
+    glEnable(GL_DEPTH_TEST); // Enable depth testing for 3D rendering
+    // gamma correction
+    //glEnable(GL_FRAMEBUFFER_SRGB);
+    glEnable(GL_CULL_FACE); // Enable face culling
+    //glCullFace(GL_BACK); // Cull back faces
+    glEnable(GL_BLEND); // Enable blending for transparency
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+    frameTime = static_cast<float>(glfwGetTime());
+}
+
 void Renderer::renderShadowMap() {
     calculateLightSpaceMatrix();
 
@@ -159,16 +171,20 @@ void Renderer::renderShadowMap() {
     glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    Shader& shadowShader = scene.getShaders()[scene.shadowIdx];
+    Shader& shadowShader = scenes[currentSceneIdx].getShaders()[scenes[currentSceneIdx].shadowIdx];
 
     shadowShader.use();
     shadowShader.setUniform("lightSpaceMatrix", UniformType::MAT4, lightSpaceMatrix);
 
-    for (auto& obj: scene.getRenderables()) {
-        Shader& shader = obj.shader;
-        Buffer& buffer = obj.buffer;
-        Model& model = obj.model;
+    Scene& currentScene = scenes[currentSceneIdx];
+    std::vector<Model>& models = currentScene.getModels();
+    std::vector<Shader>& shaders = currentScene.getShaders();
+    std::vector<Buffer>& buffers = currentScene.getBuffers();
 
+    for (auto& obj: currentScene.getRenderables()) {
+        Shader& shader = shaders[obj.shaderIdx];
+        Buffer& buffer = buffers[obj.bufferIdx];
+        Model& model = models[obj.modelIdx];
         if (shader.getName() != "simple") continue;
 
         shadowShader.setUniform("transform", UniformType::MAT4, model.transform.getTransformMatrix());
@@ -180,7 +196,7 @@ void Renderer::renderShadowMap() {
 }
 
 void Renderer::calculateLightSpaceMatrix() {
-    glm::vec3 lightPos = scene.getModels()[scene.lightIdx].getTransform().translationVec;
+    glm::vec3 lightPos = scenes[currentSceneIdx].getModels()[scenes[currentSceneIdx].lightIdx].getTransform().translationVec;
     float near_plane = 1.0f, far_plane = 20.0f;
     glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
     glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));

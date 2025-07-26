@@ -10,13 +10,14 @@
 #include <unordered_map>
 
 struct Renderable {
-    Shader& shader;
-    Buffer& buffer;
-    Model& model;
+    uint32_t modelIdx;
+    uint32_t shaderIdx;
+    uint32_t bufferIdx;
 };
 
 class Scene {
 public:
+    uint32_t sceneIdx;
     uint32_t lightIdx;
     uint32_t shadowIdx;
 

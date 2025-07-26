@@ -51,7 +51,8 @@ private:
     Camera camera;
     CameraController cameraController{camera};
 
-    Scene scene;
+    std::vector<Scene> scenes;
+    uint32_t currentSceneIdx = 0;
 
     // cameara controller ImGui
     bool isPerspective = true;
@@ -73,7 +74,9 @@ public:
 private:
     void initWindow();
     void initOpenGL();
+    void initScenes();
     void initShadowMap();
+    void initRenderStuff();
 
     void renderShadowMap();
 
