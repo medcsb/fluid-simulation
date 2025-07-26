@@ -7,24 +7,63 @@
 #include "camera.hpp"
 #include "cameraController.hpp"
 
+#include <unordered_map>
+
+struct Renderable {
+    Shader& shader;
+    Buffer& buffer;
+    Model& model;
+};
 
 class Scene {
-private:
+public:
+    uint32_t lightIdx;
+    uint32_t shadowIdx;
+
     std::vector<Model> models;
     std::vector<Shader> shaders;
     std::vector<Buffer> buffers;
+    std::vector<Renderable> renderables;
+
+    // these are only used for init functions not render loops
+    std::unordered_map<std::string, uint32_t> modelMap;
+    std::unordered_map<std::string, uint32_t> shaderMap;
+    std::unordered_map<std::string, uint32_t> bufferMap;
+    std::unordered_map<std::string, uint32_t> renderableMap;
+
     Camera camera;
     CameraController cameraController{camera};
 
-    
-
-public:
     Scene() {};
     ~Scene() {};
 
-    void initExampleCube();
-    void initExampleDragon();
+    void render(GLuint shadowMap);
 
+    void initExampleScene1();
+
+    std::vector<Model>& getModels() {return models;}
+    std::vector<Shader>& getShaders() {return shaders;}
+    std::vector<Buffer>& getBuffers() {return buffers;}
+    std::vector<Renderable>& getRenderables() {return renderables;}
+
+    Model& getModelByName(const std::string& name) {
+        return models[modelMap.at(name)];
+    }
+    Shader& getShaderByName(const std::string& name) {
+        return shaders[shaderMap.at(name)];
+    }
+    Buffer& getBufferByName(const std::string& name) {
+        return buffers[bufferMap.at(name)];
+    }
+    Renderable& getRenderableByName(const std::string& name) {
+        return renderables[renderableMap.at(name)];
+    }
+
+private:
+    void initScene1Models();
+    void initScene1Shaders();
+    void initScene1Buffers();
+    void initScene1Renderables();
 };
 
 #endif // SCENE_HPP

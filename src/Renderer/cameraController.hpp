@@ -22,7 +22,7 @@ private:
     Camera& camera;
     KeyMapping KeyMapping;
 public:
-    float movementSpeed{2.5f};
+    float movementSpeed{0.01f};
     float rollSpeed{10.0f};
     float mouseSensitivity{0.1f};
     float lastX{0.0f};

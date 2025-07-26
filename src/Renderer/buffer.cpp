@@ -2,7 +2,6 @@
 
 #include "log_utils.hpp"
 
-
 void Buffer::init(const void* vertexData, const uint32_t* indexData, const VAOConfigInfo& config) {
     if (isInitialized) {
         warn("Buffer is already initialized. Cleaning up before re-initializing, might not be intended behavior.");

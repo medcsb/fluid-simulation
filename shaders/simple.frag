@@ -50,7 +50,8 @@ float ShadowCalculation(vec4 posSpaceLight) {
     vec3 lightDir = normalize(lightPos - vertPos);
     
     // Add bias to prevent shadow acne
-    float bias = max(0.0005 * (1.0 - dot(normal, lightDir)), 0.0005);  
+    float bias = max(0.005 * (1.0 - dot(normal, lightDir)), 0.001);  
+    bias = 0.0005;
     float shadow = currentDepth - bias> closestDepth ? 1.0 : 0.0;
     
     return shadow;

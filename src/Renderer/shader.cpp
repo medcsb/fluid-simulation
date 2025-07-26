@@ -3,6 +3,7 @@
 Shader::Shader(const std::string& vertShaderPath, const std::string& fragShaderPath) 
     : vertShaderPath(vertShaderPath), fragShaderPath(fragShaderPath) {}
 
+
 void Shader::init() {
     std::string vertCodeStr;
     std::string fragCodeStr;

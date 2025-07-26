@@ -16,6 +16,8 @@ private:
     uint32_t vertexShader, fragmentShader;
     uint32_t ID;
 
+    std::string name = "";
+
     const std::string vertShaderPath;
     const std::string fragShaderPath;
 public:
@@ -26,6 +28,8 @@ public:
     void init();
     void use();
 
+    void cleanup() {glDeleteProgram(ID);}
+
     template<typename T>
     void setUniform(const std::string& name, UniformType type, T value) {
         ::setUniform(ID, name, value);
@@ -34,6 +38,8 @@ public:
     void deleteProgram() {glDeleteProgram(ID);}
 
     uint32_t getID() const {return ID;}
+    const std::string& getName() const {return name;}
+    void setName(const std::string& shaderName) {name = shaderName;}
 
 private:
     void createProgram();

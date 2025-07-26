@@ -55,10 +55,11 @@ struct Transform {
 
 class Model {
 private:
-
     uint32_t texture;
 
 public:
+
+    std::string name;
 
     std::vector<Vertex> vertices;
     std::vector<VertexNoTex> verticesNoTex;
@@ -66,6 +67,8 @@ public:
     Transform transform{};
     Light light{};
     glm::vec3 color = glm::vec3(1.0f);
+
+    bool isTextured = false;
 
     Model();
     ~Model();

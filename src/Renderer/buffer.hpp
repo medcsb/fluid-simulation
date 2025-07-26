@@ -32,7 +32,7 @@ public:
     bool isInitialized = false;
 
     Buffer() = default;
-    ~Buffer() {}
+    ~Buffer() {};
 
     void init(const void* vertexData, const uint32_t* indexData, const VAOConfigInfo& config);
     void unbindVAO() const {glBindVertexArray(0);}
