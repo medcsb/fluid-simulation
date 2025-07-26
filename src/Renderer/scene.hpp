@@ -17,6 +17,8 @@ struct Renderable {
 
 class Scene {
 public:
+    std::string name;
+
     uint32_t sceneIdx;
     uint32_t lightIdx;
     uint32_t shadowIdx;
@@ -39,8 +41,12 @@ public:
     ~Scene() {};
 
     void render(GLuint shadowMap);
+    void clearSceneData();
 
+    void emptyScene();
     void initExampleScene1();
+    void floorScene();
+    void sphScene();
 
     std::vector<Model>& getModels() {return models;}
     std::vector<Shader>& getShaders() {return shaders;}
@@ -61,6 +67,14 @@ public:
     }
 
 private:
+
+    // floor scene
+    void initFloorSceneShaders();
+    void initFloorSceneModels();
+    void initFloorSceneBuffers();
+    void initFloorSceneRenderables();
+
+    // example scene 1
     void initScene1Models();
     void initScene1Shaders();
     void initScene1Buffers();

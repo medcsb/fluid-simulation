@@ -53,10 +53,12 @@ private:
 
     std::vector<Scene> scenes;
     uint32_t currentSceneIdx = 0;
+    uint32_t sceneSelector = 0;
 
     // cameara controller ImGui
     bool isPerspective = true;
     bool showDepth = false;
+    bool shadowsOn = true;
 
 public:
 

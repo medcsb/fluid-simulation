@@ -23,14 +23,20 @@ void Renderer::init() {
     initScenes();
     initShadowMap();
     initRenderStuff();
+    sceneSelector = 0;
+    // move the camera a tiny bit up
 }
 
 void Renderer::render() {
 
     imguiUI.beginRender();
-    imguiUI.mainInfoBoard();
+    imguiUI.mainInfoBoard(sceneSelector, scenes, shadowsOn);
     imguiUI.simpleScene(scenes[currentSceneIdx], camera, cameraController, gamma, isPerspective, showDepth);
     imguiUI.render();
+
+    if (sceneSelector != currentSceneIdx) {
+        currentSceneIdx = sceneSelector;
+    }
 
     if (isPerspective) {
         camera.updateProjectionMatrix(static_cast<float>(width), static_cast<float>(height));
@@ -39,7 +45,19 @@ void Renderer::render() {
     }
     camera.updateViewMatrix();
 
-    renderShadowMap();
+    Scene& currentScene = scenes[currentSceneIdx];
+    std::vector<Model>& models = currentScene.getModels();
+    std::vector<Shader>& shaders = currentScene.getShaders();
+    std::vector<Buffer>& buffers = currentScene.getBuffers();
+    std::vector<Renderable>& renderables = currentScene.getRenderables();
+
+    if (!renderables.empty() && shadowsOn) renderShadowMap();
+    if (!shadowsOn) {
+        // reset shadow map texture
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
     glCullFace(GL_BACK);
 
     int display_w, display_h;
@@ -51,12 +69,8 @@ void Renderer::render() {
     //glBindBuffer(GL_ARRAY_BUFFER, VBO);
     //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertex) * model.getVertices().size(), model.getVertices().data());
 
-    Scene& currentScene = scenes[currentSceneIdx];
-    std::vector<Model>& models = currentScene.getModels();
-    std::vector<Shader>& shaders = currentScene.getShaders();
-    std::vector<Buffer>& buffers = currentScene.getBuffers();
 
-    for (auto& obj : currentScene.getRenderables()) {
+    for (auto& obj : renderables) {
         Shader& shader = shaders[obj.shaderIdx];
         Buffer& buffer = buffers[obj.bufferIdx];
         Model& model = models[obj.modelIdx];
@@ -125,9 +139,15 @@ void Renderer::initOpenGL() {
 }
 
 void Renderer::initScenes() {
+    Scene emptyScene;
+    emptyScene.emptyScene();
+    scenes.push_back(emptyScene);
     Scene scene1;
     scene1.initExampleScene1();
     scenes.push_back(scene1);
+    Scene floorScene;
+    floorScene.floorScene();
+    scenes.push_back(floorScene);
 }
 
 void Renderer::initShadowMap() {

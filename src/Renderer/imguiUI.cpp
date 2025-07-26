@@ -42,10 +42,22 @@ void ImguiUI::endRender() {
     }
 }
 
-void ImguiUI::mainInfoBoard() {
+void ImguiUI::mainInfoBoard(uint32_t& sceneSelector, std::vector<Scene>& scenes, bool& shadowsOn) {
     ImGui::Begin("Renderer Info");
     ImGui::Text("OpenGL Version: %s", glGetString(GL_VERSION));
     ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+    ImGui::Checkbox("Shadows On", &shadowsOn);
+    // Scene Selector
+    if (!scenes.empty()) {
+        std::vector<const char*> sceneNames;
+        sceneNames.reserve(scenes.size());
+        for (const auto& scene : scenes) {
+            sceneNames.push_back(scene.name.c_str());
+        }
+        ImGui::Combo("Select Scene", reinterpret_cast<int*>(&sceneSelector), sceneNames.data(), static_cast<int>(sceneNames.size()));
+    } else {
+        ImGui::Text("No scenes available.");
+    }
     ImGui::End();
 }
 
@@ -64,6 +76,10 @@ void ImguiUI::simpleScene(Scene& scene, Camera& camera, CameraController& camera
 
 void ImguiUI::transforms(std::vector<Model>& models) {
     if (!ImGui::CollapsingHeader("Transforms")) return;
+    if (models.empty()) {
+        ImGui::Text("No models available.");
+        return;
+    }
     for (size_t i = 0; i < models.size(); ++i) {
         Model& model = models[i];
         ImGui::PushID(i);
@@ -94,6 +110,10 @@ void ImguiUI::cameraConfig(Camera& camera, CameraController& cameraController) {
 
 void ImguiUI::lightConfig(std::vector<Model>& models, uint32_t lightIdx) {
     if (!ImGui::CollapsingHeader("Light Config")) return;
+    if (lightIdx >= models.size()) {
+        ImGui::Text("No light model available.");
+        return;
+    }
     Model& lightModel = models[lightIdx];
     ImGui::ColorEdit3("Light Color", glm::value_ptr(lightModel.getColor()));
     ImGui::DragFloat("Ambient Strength", &lightModel.light.ambientStrength, 0.01f, 0.0f, 1.0f);

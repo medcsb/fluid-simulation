@@ -24,7 +24,7 @@ public:
     void render() {ImGui::Render();}
     void endRender();
 
-    void mainInfoBoard();
+    void mainInfoBoard(uint32_t& sceneSelector, std::vector<Scene>& scenes, bool& shadowsOn);
     void simpleScene(Scene& scene, Camera& camera, CameraController& cameraController, float& gamma, bool& isPerspective, bool& showDepth);
 
 private:
