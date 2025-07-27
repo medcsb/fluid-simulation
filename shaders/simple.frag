@@ -72,15 +72,11 @@ void main() {
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), specularPower);
 
-    vec3 ambient = vec3(1.0, 1.0, 1.0) * lightColor * ambientStrength * attenuationFactor;
-    vec3 diffuse = vec3(1.0, 1.0, 1.0) * lightPos * specularStrength;
-    vec3 specular = vec3(1.0, 1.0, 1.0) * viewPos * specularPower;
+    vec3 ambient = ambientStrength * lightColor;
+    vec3 diffuse = diff * lightColor;
+    vec3 specular = specularStrength * spec * lightColor;
 
-    if (attenuationFactor == 0) {
-        diffuse = diff * lightColor;
-        ambient = ambientStrength * lightColor;
-        specular = specularStrength * spec * lightColor;
-    } else {
+    if (attenuationFactor != 0) {
         diffuse = diff * lightColor * attenuation;
         ambient = ambientStrength * lightColor * attenuation;
         specular = specularStrength * spec * lightColor * attenuation;

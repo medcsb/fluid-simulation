@@ -66,7 +66,9 @@ public:
     std::vector<uint32_t> indices;
     Transform transform{};
     Light light{};
-    glm::vec3 color = glm::vec3(1.0f);
+    glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
+    float radius = 0.1f;
+    uint32_t resolution = 20;
 
     bool isTextured = false;
 
@@ -81,6 +83,7 @@ public:
     void simpleQuad();
     void simpleCube();
     void texturedCube();
+    void simpleSphere();
     void sphereNoTex();
     void loadTexture(const std::string& path);
     void loadModel(const std::string& path);
@@ -92,6 +95,8 @@ public:
     Light& getLight() {return light;}
     glm::vec3& getColor() {return color;}
     float& getOpaqueVal() {return light.opaqueVal;}
+    uint32_t& getResolution() {return resolution;}
+    float& getRadius() {return radius;}
 };
 
 #endif // MODEL_HPP

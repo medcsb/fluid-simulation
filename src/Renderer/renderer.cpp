@@ -79,16 +79,16 @@ void Renderer::render() {
         shader.setUniform("transform", UniformType::MAT4, model.transform.getTransformMatrix());
         shader.setUniform("view", UniformType::MAT4, camera.getViewMatrix());
         shader.setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
-        shader.setUniform("lightColor", UniformType::VEC3, currentScene.getModels()[currentScene.lightIdx].getColor());
+        shader.setUniform("lightColor", UniformType::VEC3, currentScene.getModels()[currentScene.LightModelIdx].getColor());
         if (shader.getName() == "simple") {
             shader.setUniform("lightSpaceMatrix", UniformType::MAT4, lightSpaceMatrix);
-            shader.setUniform("lightPos", UniformType::VEC3, currentScene.getModels()[currentScene.lightIdx].getTransform().translationVec);
+            shader.setUniform("lightPos", UniformType::VEC3, currentScene.getModels()[currentScene.LightModelIdx].getTransform().translationVec);
             shader.setUniform("viewPos", UniformType::VEC3, camera.getPosition());
             shader.setUniform("color", UniformType::VEC3, model.getColor());
-            shader.setUniform("ambientStrength", UniformType::FLOAT, currentScene.getModels()[currentScene.lightIdx].light.ambientStrength);
-            shader.setUniform("specularStrength", UniformType::FLOAT, currentScene.getModels()[currentScene.lightIdx].light.specularStrength);
-            shader.setUniform("specularPower", UniformType::INT, currentScene.getModels()[currentScene.lightIdx].light.specularPower);
-            shader.setUniform("attenuationFactor", UniformType::FLOAT, currentScene.getModels()[currentScene.lightIdx].light.attenuationFactor);
+            shader.setUniform("ambientStrength", UniformType::FLOAT, currentScene.getModels()[currentScene.LightModelIdx].light.ambientStrength);
+            shader.setUniform("specularStrength", UniformType::FLOAT, currentScene.getModels()[currentScene.LightModelIdx].light.specularStrength);
+            shader.setUniform("specularPower", UniformType::INT, currentScene.getModels()[currentScene.LightModelIdx].light.specularPower);
+            shader.setUniform("attenuationFactor", UniformType::FLOAT, currentScene.getModels()[currentScene.LightModelIdx].light.attenuationFactor);
             shader.setUniform("useTexture", UniformType::BOOL, model.isTextured);
             shader.setUniform("gamma", UniformType::FLOAT, gamma);
             if (showDepth) shader.setUniform("showDepth", UniformType::BOOL, true);
@@ -148,6 +148,9 @@ void Renderer::initScenes() {
     Scene floorScene;
     floorScene.floorScene();
     scenes.push_back(floorScene);
+    Scene sphScene;
+    sphScene.sphScene();
+    scenes.push_back(sphScene);
 }
 
 void Renderer::initShadowMap() {
@@ -191,7 +194,7 @@ void Renderer::renderShadowMap() {
     glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    Shader& shadowShader = scenes[currentSceneIdx].getShaders()[scenes[currentSceneIdx].shadowIdx];
+    Shader& shadowShader = scenes[currentSceneIdx].getShaders()[scenes[currentSceneIdx].shadowShaderIdx];
 
     shadowShader.use();
     shadowShader.setUniform("lightSpaceMatrix", UniformType::MAT4, lightSpaceMatrix);
@@ -216,7 +219,7 @@ void Renderer::renderShadowMap() {
 }
 
 void Renderer::calculateLightSpaceMatrix() {
-    glm::vec3 lightPos = scenes[currentSceneIdx].getModels()[scenes[currentSceneIdx].lightIdx].getTransform().translationVec;
+    glm::vec3 lightPos = scenes[currentSceneIdx].getModels()[scenes[currentSceneIdx].LightModelIdx].getTransform().translationVec;
     float near_plane = 1.0f, far_plane = 20.0f;
     glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
     glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));

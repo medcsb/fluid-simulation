@@ -67,14 +67,15 @@ void ImguiUI::simpleScene(Scene& scene, Camera& camera, CameraController& camera
     ImGui::Checkbox("Perspective View", &isPerspective);
     ImGui::SliderFloat("Gamma", &gamma, 0.1f, 3.0f, "%.1f");
 
-    transforms(scene.getModels());
+    transforms(scene);
     cameraConfig(camera, cameraController);
-    lightConfig(scene.getModels(), scene.lightIdx);
+    lightConfig(scene.getModels(), scene.LightModelIdx);
 
     ImGui::End();
 }
 
-void ImguiUI::transforms(std::vector<Model>& models) {
+void ImguiUI::transforms(Scene& scene) {
+    auto& models = scene.getModels();
     if (!ImGui::CollapsingHeader("Transforms")) return;
     if (models.empty()) {
         ImGui::Text("No models available.");
@@ -82,6 +83,46 @@ void ImguiUI::transforms(std::vector<Model>& models) {
     }
     for (size_t i = 0; i < models.size(); ++i) {
         Model& model = models[i];
+        // special case sphere model
+        if (model.name == "sphere") {
+            // we can change the radius and resolution of the sphere
+            ImGui::PushID(i);
+
+            if (ImGui::CollapsingHeader(model.name.c_str())) {
+                ImGui::DragFloat3("Position", glm::value_ptr(model.getTransform().translationVec), 0.01f);
+                ImGui::ColorEdit3("Color", glm::value_ptr(model.getColor()));
+                ImGui::DragFloat("Radius", &model.getRadius(), 0.01f, 0.01f, 1.0f);
+                bool radiusChanged = ImGui::IsItemDeactivatedAfterEdit();
+                ImGui::DragInt("Resolution", reinterpret_cast<int*>(&model.getResolution()), 1, 3, 100);
+                bool resolutionChanged = ImGui::IsItemDeactivatedAfterEdit();
+
+                // if radius or resolution changed, update the sphere model
+                if (radiusChanged || resolutionChanged) {
+                    std::cout << "changed" << std::endl;
+                    model.vertices.clear();
+                    model.indices.clear();
+                    model.simpleSphere();
+                    Buffer& buffer = scene.getBuffers()[scene.bufferMap.at(model.name)];
+                    buffer.unbindVAO();
+                    VAOConfigInfo config{};
+                    config.sizeOfVertex = sizeof(Vertex);
+                    config.sizeOfVertexData = model.vertices.size() * sizeof(Vertex);
+                    config.verticesCount = model.vertices.size();
+                    config.indexCount = model.indices.size();
+                    config.attributes = {
+                        {0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, pos)},
+                        {1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, normal)},
+                        {2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, texCoord)}
+                    };
+                    config.useEBO = true;
+                    config.drawMode = GL_TRIANGLES;
+                    buffer.init(model.vertices.data(), model.indices.data(), config);
+                }
+            }
+
+            ImGui::PopID();
+            continue;
+        }
         ImGui::PushID(i);
         if (ImGui::CollapsingHeader(model.name.c_str())) {
             ImGui::DragFloat3("Position", glm::value_ptr(model.getTransform().translationVec), 0.01f);
@@ -108,13 +149,13 @@ void ImguiUI::cameraConfig(Camera& camera, CameraController& cameraController) {
     ImGui::Text("Camera Roll: %.2f", camera.getRoll());
 }
 
-void ImguiUI::lightConfig(std::vector<Model>& models, uint32_t lightIdx) {
+void ImguiUI::lightConfig(std::vector<Model>& models, uint32_t LightModelIdx) {
     if (!ImGui::CollapsingHeader("Light Config")) return;
-    if (lightIdx >= models.size()) {
+    if (LightModelIdx >= models.size()) {
         ImGui::Text("No light model available.");
         return;
     }
-    Model& lightModel = models[lightIdx];
+    Model& lightModel = models[LightModelIdx];
     ImGui::ColorEdit3("Light Color", glm::value_ptr(lightModel.getColor()));
     ImGui::DragFloat("Ambient Strength", &lightModel.light.ambientStrength, 0.01f, 0.0f, 1.0f);
     ImGui::DragFloat("Specular Strength", &lightModel.light.specularStrength, 0.1f, 0.0f, 10.0f);

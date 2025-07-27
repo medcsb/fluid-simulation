@@ -197,8 +197,91 @@ void Model::texturedCube() {
     };
 }
 
-void Model::sphereNoTex() {
+void Model::simpleSphere() {
+    uint32_t stacks = resolution;
+    uint32_t slices = resolution * 2;
 
+    for (size_t i = 0; i <= stacks; i++) {
+        float v = static_cast<float>(i) / static_cast<float>(stacks);
+        float phi = v * glm::pi<float>();
+
+        for (size_t j = 0; j <= slices; j++) {
+            float u = static_cast<float>(j) / static_cast<float>(slices);
+            float theta = u * glm::pi<float>() * 2.0f;
+
+            glm::vec3 pos;
+            pos.x = std::sin(phi) * std::cos(theta);
+            pos.y = std::cos(phi);
+            pos.z = std::sin(phi) * std::sin(theta);
+            pos *= radius;
+
+            glm::vec3 normal = glm::normalize(pos);
+            glm::vec2 texCoord(u, v);
+
+            vertices.push_back({pos, normal, texCoord});
+        }
+    }
+
+    // indices
+    for (size_t i = 0; i < stacks; i++) {
+        for (size_t j = 0; j < slices; j++) {
+            uint32_t first = (i * (slices + 1)) + j;
+            uint32_t second = first + slices + 1;
+
+            // First triangle
+            indices.push_back(first);
+            indices.push_back(first + 1);
+            indices.push_back(second);
+
+            // Second triangle
+            indices.push_back(second);
+            indices.push_back(first + 1);
+            indices.push_back(second + 1);
+        }
+    }
+}
+
+void Model::sphereNoTex() {
+    uint32_t stacks = resolution;
+    uint32_t slices = resolution * 2;
+
+    for (size_t i = 0; i <= stacks; i++) {
+        float v = static_cast<float>(i) / static_cast<float>(stacks);
+        float phi = v * glm::pi<float>();
+
+        for (size_t j = 0; j <= slices; j++) {
+            float u = static_cast<float>(j) / static_cast<float>(slices);
+            float theta = u * glm::pi<float>() * 2.0f;
+
+            glm::vec3 pos;
+            pos.x = std::sin(phi) * std::cos(theta);
+            pos.y = std::cos(phi);
+            pos.z = std::sin(phi) * std::sin(theta);
+            pos *= radius;
+
+            glm::vec3 normal = glm::normalize(pos);
+
+            verticesNoTex.push_back({pos, normal});
+        }
+    }
+
+    // indices
+    for (size_t i = 0; i < stacks; i++) {
+        for (size_t j = 0; j < slices; j++) {
+            uint32_t first = (i * (slices + 1)) + j;
+            uint32_t second = first + slices + 1;
+
+            // First triangle
+            indices.push_back(first);
+            indices.push_back(first + 1);
+            indices.push_back(second);
+
+            // Second triangle
+            indices.push_back(second);
+            indices.push_back(first + 1);
+            indices.push_back(second + 1);
+        }
+    }
 }
 
 void Model::loadModel(const std::string& path) {
