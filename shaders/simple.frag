@@ -22,6 +22,7 @@ uniform int specularPower;
 uniform float attenuationFactor;
 uniform bool useTexture;
 uniform bool showDepth;
+uniform bool shadowsOn;
 
 uniform float gamma;
 
@@ -83,7 +84,8 @@ void main() {
     }
 
     // calculate shadows
-    float shadow = ShadowCalculation(fragPosLightSpace);
+    float shadow = 0.0;
+    if (shadowsOn) shadow = ShadowCalculation(fragPosLightSpace);
 
     vec3 result = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
 

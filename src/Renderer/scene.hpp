@@ -34,9 +34,6 @@ public:
     std::unordered_map<std::string, uint32_t> bufferMap;
     std::unordered_map<std::string, uint32_t> renderableMap;
 
-    Camera camera;
-    CameraController cameraController{camera};
-
     Scene() {};
     ~Scene() {};
 

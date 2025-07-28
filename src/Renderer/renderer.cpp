@@ -52,12 +52,6 @@ void Renderer::render() {
     std::vector<Renderable>& renderables = currentScene.getRenderables();
 
     if (!renderables.empty() && shadowsOn) renderShadowMap();
-    if (!shadowsOn) {
-        // reset shadow map texture
-        glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
     glCullFace(GL_BACK);
 
     int display_w, display_h;
@@ -65,10 +59,6 @@ void Renderer::render() {
     glViewport(0, 0, display_w, display_h);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    //glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertex) * model.getVertices().size(), model.getVertices().data());
-
 
     for (auto& obj : renderables) {
         Shader& shader = shaders[obj.shaderIdx];
@@ -91,8 +81,8 @@ void Renderer::render() {
             shader.setUniform("attenuationFactor", UniformType::FLOAT, currentScene.getModels()[currentScene.LightModelIdx].light.attenuationFactor);
             shader.setUniform("useTexture", UniformType::BOOL, model.isTextured);
             shader.setUniform("gamma", UniformType::FLOAT, gamma);
-            if (showDepth) shader.setUniform("showDepth", UniformType::BOOL, true);
-            else shader.setUniform("showDepth", UniformType::BOOL, false);
+            shader.setUniform("showDepth", UniformType::BOOL, showDepth);
+            shader.setUniform("shadowsOn", UniformType::BOOL, shadowsOn);
             glUniform1i(glGetUniformLocation(shader.getID(), "texture1"), 0);
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, shadowMap);

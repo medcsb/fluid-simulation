@@ -14,6 +14,12 @@
 #include <vector>
 #include <string>
 
+struct Particle {
+    glm::vec3 position;
+    glm::vec3 velocity = glm::vec3(0.0f);
+    glm::vec3 scale = glm::vec3(1.0f);
+};
+
 struct Vertex {
     glm::vec3 pos;
     //glm::vec3 color;
@@ -64,6 +70,7 @@ public:
     std::vector<Vertex> vertices;
     std::vector<VertexNoTex> verticesNoTex;
     std::vector<uint32_t> indices;
+    std::vector<Particle> particles;
     Transform transform{};
     Light light{};
     glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -79,6 +86,7 @@ public:
     void setTextureParams(GLenum wrapS = GL_REPEAT, GLenum wrapT = GL_REPEAT, GLenum minFilter = GL_LINEAR, GLenum magFilter = GL_LINEAR);
     void setTextureParams();
 
+    void particle();
     void simpleTriangle();
     void simpleQuad();
     void simpleCube();
@@ -90,6 +98,7 @@ public:
 
     std::vector<Vertex>& getVertices() {return vertices;}
     std::vector<VertexNoTex>& getVerticesNoTex() {return verticesNoTex;}
+    std::vector<Particle>& getParticles() {return particles;}
     std::vector<uint32_t>& getIndices() {return indices;}
     Transform& getTransform() {return transform;}
     Light& getLight() {return light;}

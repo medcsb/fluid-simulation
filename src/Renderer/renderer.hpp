@@ -58,7 +58,7 @@ private:
     // cameara controller ImGui
     bool isPerspective = true;
     bool showDepth = false;
-    bool shadowsOn = true;
+    bool shadowsOn = false;
 
 public:
 
