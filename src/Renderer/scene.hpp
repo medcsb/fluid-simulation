@@ -6,6 +6,7 @@
 #include "buffer.hpp"
 #include "camera.hpp"
 #include "cameraController.hpp"
+#include "sph.hpp"
 
 #include <unordered_map>
 
@@ -45,6 +46,7 @@ public:
     void initExampleScene1();
     void floorScene();
     void sphScene();
+    void initSphDemo(SPHSolver& sphSolver);
 
     std::vector<Model>& getModels() {return models;}
     std::vector<Shader>& getShaders() {return shaders;}
@@ -84,6 +86,11 @@ private:
     void initSphBuffers();
     void initSphRenderables();
 
+    void initSphDemoShaders();
+    void initSphDemoModels();
+    void initSphDemoBuffers();
+    void initSphDemoRenderables();
+
     // utility functions
 
     void initSimpleShader() {
@@ -109,6 +116,14 @@ private:
         shaders.push_back(shadowShader);
         shaderMap["shadow"] = shaders.size() - 1;
         shadowShaderIdx = shaders.size() - 1;
+    }
+
+    void initSphShader() {
+        Shader sphShader("../shaders/sph.vert", "../shaders/sph.frag");
+        sphShader.init();
+        sphShader.setName("sph");
+        shaders.push_back(sphShader);
+        shaderMap["sph"] = shaders.size() - 1;
     }
 
     void initCubeModel() {
@@ -166,6 +181,15 @@ private:
         models.push_back(light);
         LightModelIdx = models.size() - 1;
         modelMap["light"] = models.size() - 1;
+    }
+
+    void initParticleModel() {
+        Model particleModel;
+        particleModel.name = "particle";
+        particleModel.isTextured = false;
+        particleModel.particle();
+        models.push_back(particleModel);
+        modelMap["particle"] = models.size() - 1;
     }
 
     void initCubeBuffer() {
@@ -265,6 +289,36 @@ private:
         sphereBuffer.init(getModelByName("sphere").getVertices().data(), getModelByName("sphere").getIndices().data(), sphereBufferConfig);
         buffers.push_back(sphereBuffer);
         bufferMap["sphere"] = buffers.size() - 1;
+    }
+
+    void initParticleBuffer() {
+        Buffer particleBuffer;
+        InstanceConfigInfo configInfo{};
+        configInfo.staticAttribs = {
+            {0, 3, GL_FLOAT, GL_FALSE, sizeof(PVertex), offsetof(PVertex, pos)},
+            {1, 3, GL_FLOAT, GL_FALSE, sizeof(PVertex), offsetof(PVertex, normal)}
+        };
+        configInfo.instanceAttribs = {
+            {2, 3, GL_FLOAT, GL_FALSE, sizeof(ParticleT), offsetof(ParticleT, pos)},
+            {3, 3, GL_FLOAT, GL_FALSE, sizeof(ParticleT), offsetof(ParticleT, color)}
+        };
+        configInfo.sizeOfVertex = sizeof(PVertex);
+        configInfo.sizeOfVertexData = configInfo.sizeOfVertex * getModelByName("particle").getPVertices().size();
+        configInfo.sizeOfInstance = sizeof(ParticleT);
+        configInfo.verticesCount = getModelByName("particle").getPVertices().size();
+        configInfo.indexCount = getModelByName("particle").getIndices().size();
+        configInfo.instancesCount = getModelByName("particle").getParticleTs().size();
+        configInfo.useEBO = true;
+        configInfo.drawMode = GL_TRIANGLES;
+
+        particleBuffer.initInstanced(
+            getModelByName("particle").getPVertices().data(),
+            getModelByName("particle").getParticleTs().data(),
+            getModelByName("particle").getIndices().data(),
+            configInfo
+        );
+        buffers.push_back(particleBuffer);
+        bufferMap["particle"] = buffers.size() - 1;
     }
 
 };

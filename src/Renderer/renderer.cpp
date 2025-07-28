@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 
+#include "sph.hpp"
+
 
 Renderer::Renderer() {}
 Renderer::~Renderer() {
@@ -34,9 +36,8 @@ void Renderer::render() {
     imguiUI.simpleScene(scenes[currentSceneIdx], camera, cameraController, gamma, isPerspective, showDepth);
     imguiUI.render();
 
-    if (sceneSelector != currentSceneIdx) {
-        currentSceneIdx = sceneSelector;
-    }
+    if (sceneSelector != currentSceneIdx) currentSceneIdx = sceneSelector;
+    if (currentSceneIdx == scenes.size() - 1) currentSceneType = SPH_DEMO;
 
     if (isPerspective) {
         camera.updateProjectionMatrix(static_cast<float>(width), static_cast<float>(height));
@@ -46,10 +47,7 @@ void Renderer::render() {
     camera.updateViewMatrix();
 
     Scene& currentScene = scenes[currentSceneIdx];
-    std::vector<Model>& models = currentScene.getModels();
-    std::vector<Shader>& shaders = currentScene.getShaders();
-    std::vector<Buffer>& buffers = currentScene.getBuffers();
-    std::vector<Renderable>& renderables = currentScene.getRenderables();
+    std::vector<Renderable> &renderables = currentScene.getRenderables();
 
     if (!renderables.empty() && shadowsOn) renderShadowMap();
     glCullFace(GL_BACK);
@@ -60,6 +58,90 @@ void Renderer::render() {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    if (currentSceneType == NORMAL_SCENE) renderNormalScene();
+    else if (currentSceneType == SPH_DEMO) renderSphDemoScene();
+
+    imguiUI.endRender();
+
+    glfwSwapBuffers(window);
+    glfwPollEvents();
+}
+
+void Renderer::renderSphDemoScene() {
+    Scene& currentScene = scenes[currentSceneIdx];
+    std::vector<Model>& models = currentScene.getModels();
+    std::vector<Shader>& shaders = currentScene.getShaders();
+    std::vector<Buffer>& buffers = currentScene.getBuffers();
+    std::vector<Renderable>& renderables = currentScene.getRenderables();
+    sphSolver.update(0.0016f);
+    for (auto& obj : renderables) {
+        Shader& shader = shaders[obj.shaderIdx];
+        Buffer& buffer = buffers[obj.bufferIdx];
+        Model& model = models[obj.modelIdx];
+        if (model.isTextured) model.bindTexture();
+        shader.use();
+
+        if (shader.getName() == "sph") {
+            sphSolver.radius = model.getRadius();
+            shader.setUniform("view", UniformType::MAT4, camera.getViewMatrix());
+            shader.setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
+            shader.setUniform("radius", UniformType::FLOAT, sphSolver.radius);
+
+            shader.setUniform("lightPos", UniformType::VEC3, models[currentScene.LightModelIdx].getTransform().translationVec);
+            shader.setUniform("lightColor", UniformType::VEC3, models[currentScene.LightModelIdx].getColor());
+            shader.setUniform("viewPos", UniformType::VEC3, camera.getPosition());
+            shader.setUniform("ambientStrength", UniformType::FLOAT, models[currentScene.LightModelIdx].light.ambientStrength);
+            shader.setUniform("specularStrength", UniformType::FLOAT, models[currentScene.LightModelIdx].light.specularStrength);
+            shader.setUniform("specularPower", UniformType::INT, models[currentScene.LightModelIdx].light.specularPower);
+            shader.setUniform("attenuationFactor", UniformType::FLOAT, models[currentScene.LightModelIdx].light.attenuationFactor);
+            shader.setUniform("showDepth", UniformType::BOOL, showDepth);
+            
+            buffer.updateInstanceData(
+                sphSolver.particles.data(),
+                sizeof(Particle),
+                sphSolver.particles.size()
+            );
+
+            buffer.bindInstanced();
+            buffer.drawInstanced();
+            break;
+        }     
+        shader.setUniform("transform", UniformType::MAT4, model.transform.getTransformMatrix());
+        shader.setUniform("view", UniformType::MAT4, camera.getViewMatrix());
+        shader.setUniform("projection", UniformType::MAT4, camera.getProjectionMatrix());
+        shader.setUniform("lightColor", UniformType::VEC3, currentScene.getModels()[currentScene.LightModelIdx].getColor());
+
+        if (shader.getName() == "simple") {
+            shader.setUniform("lightSpaceMatrix", UniformType::MAT4, lightSpaceMatrix);
+            shader.setUniform("lightPos", UniformType::VEC3, currentScene.getModels()[currentScene.LightModelIdx].getTransform().translationVec);
+            shader.setUniform("viewPos", UniformType::VEC3, camera.getPosition());
+            shader.setUniform("color", UniformType::VEC3, model.getColor());
+            shader.setUniform("ambientStrength", UniformType::FLOAT, currentScene.getModels()[currentScene.LightModelIdx].light.ambientStrength);
+            shader.setUniform("specularStrength", UniformType::FLOAT, currentScene.getModels()[currentScene.LightModelIdx].light.specularStrength);
+            shader.setUniform("specularPower", UniformType::INT, currentScene.getModels()[currentScene.LightModelIdx].light.specularPower);
+            shader.setUniform("attenuationFactor", UniformType::FLOAT, currentScene.getModels()[currentScene.LightModelIdx].light.attenuationFactor);
+            shader.setUniform("useTexture", UniformType::BOOL, model.isTextured);
+            shader.setUniform("gamma", UniformType::FLOAT, gamma);
+            shader.setUniform("showDepth", UniformType::BOOL, showDepth);
+            shader.setUniform("shadowsOn", UniformType::BOOL, shadowsOn);
+            glUniform1i(glGetUniformLocation(shader.getID(), "texture1"), 0);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, shadowMap);
+            glUniform1i(glGetUniformLocation(shader.getID(), "shadowMap"), 1);
+        } else if (shader.getName() == "light") {
+            shader.setUniform("opaqueVal", UniformType::FLOAT, model.getOpaqueVal());
+        }
+        buffer.bind();
+        buffer.draw();
+    }
+}
+
+void Renderer::renderNormalScene() {
+    Scene& currentScene = scenes[currentSceneIdx];
+    std::vector<Model>& models = currentScene.getModels();
+    std::vector<Shader>& shaders = currentScene.getShaders();
+    std::vector<Buffer>& buffers = currentScene.getBuffers();
+    std::vector<Renderable>& renderables = currentScene.getRenderables();
     for (auto& obj : renderables) {
         Shader& shader = shaders[obj.shaderIdx];
         Buffer& buffer = buffers[obj.bufferIdx];
@@ -93,11 +175,6 @@ void Renderer::render() {
         buffer.bind();
         buffer.draw();
     }
-
-    imguiUI.endRender();
-
-    glfwSwapBuffers(window);
-    glfwPollEvents();
 }
 
 void Renderer::processInput() {
@@ -141,6 +218,9 @@ void Renderer::initScenes() {
     Scene sphScene;
     sphScene.sphScene();
     scenes.push_back(sphScene);
+    Scene sphDemo;
+    sphDemo.initSphDemo(sphSolver);
+    scenes.push_back(sphDemo);
 }
 
 void Renderer::initShadowMap() {

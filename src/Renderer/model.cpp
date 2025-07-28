@@ -197,51 +197,49 @@ void Model::texturedCube() {
     };
 }
 
-void Model::particle() {
+    void Model::particle() {
+        uint32_t stacks = resolution;
+        uint32_t slices = resolution * 2;
 
-    uint32_t stacks = resolution;
-    uint32_t slices = resolution * 2;
+        for (size_t i = 0; i <= stacks; i++) {
+            float v = static_cast<float>(i) / static_cast<float>(stacks);
+            float phi = v * glm::pi<float>();
 
-    for (size_t i = 0; i <= stacks; i++) {
-        float v = static_cast<float>(i) / static_cast<float>(stacks);
-        float phi = v * glm::pi<float>();
+            for (size_t j = 0; j <= slices; j++) {
+                float u = static_cast<float>(j) / static_cast<float>(slices);
+                float theta = u * glm::pi<float>() * 2.0f;
 
-        for (size_t j = 0; j <= slices; j++) {
-            float u = static_cast<float>(j) / static_cast<float>(slices);
-            float theta = u * glm::pi<float>() * 2.0f;
+                glm::vec3 pos;
+                pos.x = std::sin(phi) * std::cos(theta);
+                pos.y = std::cos(phi);
+                pos.z = std::sin(phi) * std::sin(theta);
 
-            glm::vec3 pos;
-            pos.x = std::sin(phi) * std::cos(theta);
-            pos.y = std::cos(phi);
-            pos.z = std::sin(phi) * std::sin(theta);
-            pos *= radius;
+                PVertex p{};
+                p.pos = pos;
+                p.normal = glm::normalize(pos);
+                pVertices.push_back(p);
+                glm::vec3 normal = glm::normalize(pos);
+            }
+        }
 
-            PVertex p{};
-            p.pos = pos;
-            p.color = glm::vec3(0.0f, 0.0f, 1.0f); 
-            p.scale = glm::vec3(radius);
-            PVertices.push_back(p);
+        // indices
+        for (size_t i = 0; i < stacks; i++) {
+            for (size_t j = 0; j < slices; j++) {
+                uint32_t first = (i * (slices + 1)) + j;
+                uint32_t second = first + slices + 1;
+
+                // First triangle
+                indices.push_back(first);
+                indices.push_back(first + 1);
+                indices.push_back(second);
+
+                // Second triangle
+                indices.push_back(second);
+                indices.push_back(first + 1);
+                indices.push_back(second + 1);
+            }
         }
     }
-
-    // indices
-    for (size_t i = 0; i < stacks; i++) {
-        for (size_t j = 0; j < slices; j++) {
-            uint32_t first = (i * (slices + 1)) + j;
-            uint32_t second = first + slices + 1;
-
-            // First triangle
-            indices.push_back(first);
-            indices.push_back(first + 1);
-            indices.push_back(second);
-
-            // Second triangle
-            indices.push_back(second);
-            indices.push_back(first + 1);
-            indices.push_back(second + 1);
-        }
-    }
-}
 
 void Model::simpleSphere() {
     uint32_t stacks = resolution;

@@ -83,6 +83,16 @@ void ImguiUI::transforms(Scene& scene) {
     }
     for (size_t i = 0; i < models.size(); ++i) {
         Model& model = models[i];
+
+        // special case for particle model
+        if (model.name == "particle") {
+            ImGui::PushID(i);
+            if (ImGui::CollapsingHeader(model.name.c_str())) {
+                ImGui::DragFloat("Radius", &model.getRadius(), 0.01f, 0.01f, 1.0f);
+            }
+            ImGui::PopID();
+            continue;
+        }
         // special case sphere model
         if (model.name == "sphere") {
             // we can change the radius and resolution of the sphere

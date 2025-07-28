@@ -5,6 +5,21 @@ void Scene::emptyScene() {
     name = "Empty Scene";
 }
 
+void Scene::initSphDemo(SPHSolver& sphSolver) {
+    clearSceneData();
+    initSphDemoShaders();
+    initSphDemoModels();
+    std::vector<glm::vec3> intancesPos = sphSolver.spawnParticles();
+    for (size_t i = 0; i < intancesPos.size(); ++i) {
+        getModelByName("particle").particleTs.push_back(
+            {intancesPos[i], glm::vec3(0.0f, 0.0f, 1.0f)}
+        );
+    }
+    initSphDemoBuffers();
+    initSphDemoRenderables();
+    name = "SPH Demo";
+}
+
 void Scene::floorScene() {
     clearSceneData();
     initFloorSceneShaders();
@@ -138,4 +153,37 @@ void Scene::initFloorSceneRenderables() {
     Renderable lightRenderable{modelMap["light"], shaderMap["light"], bufferMap["light"]};
     renderables.push_back(lightRenderable);
     renderableMap["light"] = renderables.size() - 1;
+}
+
+void Scene::initSphDemoShaders() {
+    initSimpleShader();
+    initLightShader();
+    initShadowShader();
+    initSphShader();
+}
+
+void Scene::initSphDemoModels() {
+    initFloorModel();
+    initLightModel();
+    initParticleModel();
+}
+
+void Scene::initSphDemoBuffers() {
+    initFloorBuffer();
+    initLightBuffer();
+    initParticleBuffer();
+}
+
+void Scene::initSphDemoRenderables() {
+    Renderable floorRenderable{modelMap["floor"], shaderMap["simple"], bufferMap["floor"]};
+    renderables.push_back(floorRenderable);
+    renderableMap["floor"] = renderables.size() - 1;
+
+    Renderable lightRenderable{modelMap["light"], shaderMap["light"], bufferMap["light"]};
+    renderables.push_back(lightRenderable);
+    renderableMap["light"] = renderables.size() - 1;
+
+    Renderable particleRenderable{modelMap["particle"], shaderMap["sph"], bufferMap["particle"]};
+    renderables.push_back(particleRenderable);
+    renderableMap["particle"] = renderables.size() - 1;
 }

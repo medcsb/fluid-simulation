@@ -66,6 +66,8 @@ private:
     bool showDepth = false;
     bool shadowsOn = false;
 
+    SPHSolver sphSolver;
+
 public:
 
     Renderer();
@@ -80,6 +82,10 @@ public:
     }
 
 private:
+    void renderNormalScene();
+    void renderSphDemoScene();
+
+
     void initWindow();
     void initOpenGL();
     void initScenes();

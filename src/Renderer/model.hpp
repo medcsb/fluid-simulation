@@ -16,8 +16,7 @@
 
 struct PVertex {
     glm::vec3 pos;
-    glm::vec3 color;
-    glm::vec3 scale;
+    glm::vec3 normal;
 };
 
 struct Vertex {
@@ -59,6 +58,11 @@ struct Transform {
     }
 };
 
+struct ParticleT {
+    glm::vec3 pos = glm::vec3(0.0f);
+    glm::vec3 color = glm::vec3(0.0f, 0.0f, 1.0f);
+};
+
 class Model {
 private:
     uint32_t texture;
@@ -69,8 +73,9 @@ public:
 
     std::vector<Vertex> vertices;
     std::vector<VertexNoTex> verticesNoTex;
-    std::vector<uint32_t> indices;
     std::vector<PVertex> pVertices;
+    std::vector<uint32_t> indices;
+    std::vector<ParticleT> particleTs;
     Transform transform{};
     Light light{};
     glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -100,6 +105,7 @@ public:
     std::vector<VertexNoTex>& getVerticesNoTex() {return verticesNoTex;}
     std::vector<PVertex>& getPVertices() {return pVertices;}
     std::vector<uint32_t>& getIndices() {return indices;}
+    std::vector<ParticleT>& getParticleTs() {return particleTs;}
     Transform& getTransform() {return transform;}
     Light& getLight() {return light;}
     glm::vec3& getColor() {return color;}
