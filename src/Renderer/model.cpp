@@ -216,9 +216,11 @@ void Model::particle() {
             pos.z = std::sin(phi) * std::sin(theta);
             pos *= radius;
 
-            Particle p{};
-            p.position = pos;
-            particles.push_back(p);
+            PVertex p{};
+            p.pos = pos;
+            p.color = glm::vec3(0.0f, 0.0f, 1.0f); 
+            p.scale = glm::vec3(radius);
+            PVertices.push_back(p);
         }
     }
 

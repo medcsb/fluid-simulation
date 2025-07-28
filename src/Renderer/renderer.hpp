@@ -21,6 +21,11 @@
 #include <iostream>
 #include <memory>
 
+enum SceneType {
+    NORMAL_SCENE,
+    SPH_DEMO,
+};
+
 // using OpenGL 4.6
 const int OPENGL_VERSION_MAJOR = 4;
 const int OPENGL_VERSION_MINOR = 5;
@@ -52,6 +57,7 @@ private:
     CameraController cameraController{camera};
 
     std::vector<Scene> scenes;
+    SceneType currentSceneType = NORMAL_SCENE;
     uint32_t currentSceneIdx = 0;
     uint32_t sceneSelector = 0;
 

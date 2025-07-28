@@ -14,10 +14,10 @@
 #include <vector>
 #include <string>
 
-struct Particle {
-    glm::vec3 position;
-    glm::vec3 velocity = glm::vec3(0.0f);
-    glm::vec3 scale = glm::vec3(1.0f);
+struct PVertex {
+    glm::vec3 pos;
+    glm::vec3 color;
+    glm::vec3 scale;
 };
 
 struct Vertex {
@@ -70,7 +70,7 @@ public:
     std::vector<Vertex> vertices;
     std::vector<VertexNoTex> verticesNoTex;
     std::vector<uint32_t> indices;
-    std::vector<Particle> particles;
+    std::vector<PVertex> pVertices;
     Transform transform{};
     Light light{};
     glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -98,7 +98,7 @@ public:
 
     std::vector<Vertex>& getVertices() {return vertices;}
     std::vector<VertexNoTex>& getVerticesNoTex() {return verticesNoTex;}
-    std::vector<Particle>& getParticles() {return particles;}
+    std::vector<PVertex>& getPVertices() {return pVertices;}
     std::vector<uint32_t>& getIndices() {return indices;}
     Transform& getTransform() {return transform;}
     Light& getLight() {return light;}
