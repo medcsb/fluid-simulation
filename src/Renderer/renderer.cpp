@@ -89,10 +89,10 @@ void Renderer::renderSphDemoScene() {
 
             shader.setUniform("lightPos", UniformType::VEC3, models[currentScene.LightModelIdx].getTransform().translationVec);
             shader.setUniform("lightColor", UniformType::VEC3, models[currentScene.LightModelIdx].getColor());
-            shader.setUniform("viewPos", UniformType::VEC3, camera.getPosition());
+            //shader.setUniform("viewPos", UniformType::VEC3, camera.getPosition());
             shader.setUniform("ambientStrength", UniformType::FLOAT, models[currentScene.LightModelIdx].light.ambientStrength);
-            shader.setUniform("specularStrength", UniformType::FLOAT, models[currentScene.LightModelIdx].light.specularStrength);
-            shader.setUniform("specularPower", UniformType::INT, models[currentScene.LightModelIdx].light.specularPower);
+            //shader.setUniform("specularStrength", UniformType::FLOAT, models[currentScene.LightModelIdx].light.specularStrength);
+            //shader.setUniform("specularPower", UniformType::INT, models[currentScene.LightModelIdx].light.specularPower);
             shader.setUniform("attenuationFactor", UniformType::FLOAT, models[currentScene.LightModelIdx].light.attenuationFactor);
             shader.setUniform("showDepth", UniformType::BOOL, showDepth);
             

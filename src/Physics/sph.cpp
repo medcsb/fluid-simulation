@@ -13,9 +13,9 @@ void SPHSolver::update(float dt) {
 
 std::vector<glm::vec3> SPHSolver::spawnParticles() {
     std::vector<glm::vec3> positions;
-    for (float x = -0.5f; x <= 0.5f; x += radius) {
-        for (float y = 0.5f; y <= 0.5f; y += radius) {
-            for (float z = -0.5f; z <= 0.5f; z += radius) {
+    for (float x = -1.0f; x <= 1.0f; x += radius) {
+        for (float y = 1.0f; y <= 1.0f; y += radius) {
+            for (float z = -1.0f; z <= 1.0f; z += radius) {
                 Particle particle;
                 particle.position = glm::vec3(x, y + radius, z);
                 particle.velocity = glm::vec3(0.0f);
@@ -34,9 +34,32 @@ void SPHSolver::resolveCollisions() {
             float distance = glm::length(delta);
             if (distance < radius * 2.0f) {
                 glm::vec3 normal = glm::normalize(delta);
+                if (delta == glm::vec3(0.0f)) {
+                    normal = glm::vec3(0.0f, 1.0f, 0.0f);
+                }
                 float overlap = radius * 2.0f - distance;
                 particles[i].position += normal * overlap * 0.5f;
                 particles[j].position -= normal * overlap * 0.5f;
+
+                // Simple velocity response
+
+                float restitution = 0.5f;  // Bounciness [0 = inelastic, 1 = fully elastic]
+                float damping = 0.1f;      // Extra damping factor
+
+                glm::vec3 relativeVelocity = particles[i].velocity - particles[j].velocity;
+                float relVelAlongNormal = glm::dot(relativeVelocity, normal);
+
+                // Only resolve if they are moving toward each other
+                if (relVelAlongNormal < 0.0f) {
+                    float impulse = -(1.0f + restitution) * relVelAlongNormal;
+                    impulse *= 0.5f; // Split equally (or adjust based on mass if needed)
+
+                    glm::vec3 impulseVec = impulse * normal;
+
+                    particles[i].velocity += impulseVec * (1.0f - damping);
+                    particles[j].velocity -= impulseVec * (1.0f - damping);
+                }
+                
             }
         }
     }

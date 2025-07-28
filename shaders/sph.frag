@@ -8,10 +8,10 @@ out vec4 FragColor;
 
 uniform vec3 lightPos;
 uniform vec3 lightColor;
-uniform vec3 viewPos;
+//uniform vec3 viewPos;
 uniform float ambientStrength;
-uniform float specularStrength;
-uniform int specularPower;
+//uniform float specularStrength;
+//uniform int specularPower;
 uniform float attenuationFactor;
 uniform bool showDepth;
 
@@ -37,24 +37,19 @@ void main() {
     float diff = max(dot(norm, lightDir), 0.0);
 
     // specular
-    vec3 viewDir = normalize(viewPos - vertPos);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), specularPower);
 
     // ambient
     vec3 ambient = ambientStrength * lightColor;
     // diffuse
     vec3 diffuse = diff * lightColor;
     // specular
-    vec3 specular = specularStrength * spec * lightColor;
 
     if (attenuationFactor != 0) {
         diffuse = diff * lightColor * attenuation;
         ambient = ambientStrength * lightColor * attenuation;
-        specular = specularStrength * spec * lightColor * attenuation;
     }
 
-    vec3 result = (ambient + (diffuse + specular)) * vertColor;
+    vec3 result = (ambient + (diffuse)) * vertColor;
 
     if (showDepth) {
         float depth = LogDepth(gl_FragCoord.z);
