@@ -34,7 +34,7 @@ void main() {
     float dist2 = dot(directionToLight, directionToLight);
     float attenuation = attenuationFactor / dist2;
     vec3 lightDir = normalize(directionToLight);
-    float diff = max(dot(norm, lightDir), 0.0);
+    float diff = max(dot(norm, lightDir), 0.1);
 
     // specular
 
@@ -58,5 +58,5 @@ void main() {
         FragColor = vec4(result, 1.0);
     }
 
-    FragColor.rgb = pow(FragColor.rgb, vec3(1.0/gamma));
+    //FragColor.rgb = pow(FragColor.rgb, vec3(1.0/gamma));
 }

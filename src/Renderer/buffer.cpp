@@ -45,7 +45,7 @@ void Buffer::initInstanced(const void* vertexData, const void* instanceData, con
 
     // setup instance attributes
     glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-    glBufferData(GL_ARRAY_BUFFER, instancesCount * config.sizeOfInstance, instanceData, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, instancesCount * config.sizeOfInstance, nullptr, GL_DYNAMIC_DRAW);
 
     for (const auto& attr : config.instanceAttribs) {
         glVertexAttribPointer(
@@ -77,11 +77,12 @@ void Buffer::drawInstanced() const {
     else glDrawArraysInstanced(drawMode, 0, indexCount, instancesCount);
 }
 
-void Buffer::updateInstanceData(const void* instanceData, size_t instanceSize, size_t instanceCount) const {
+void Buffer::updateInstanceData(const void* instanceData, size_t instanceSize, size_t instanceCount) {
     if (!isInitialized) {
         error("Buffer is not initialized. Cannot update instance data.");
         return;
     }
+    instancesCount = instanceCount;
     glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
     glBufferSubData(GL_ARRAY_BUFFER, 0, instanceSize * instanceCount, instanceData);
 }

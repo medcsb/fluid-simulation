@@ -57,7 +57,7 @@ public:
     void initInstanced(const void* vertexData, const void* instanceData, const uint32_t* indexData, InstanceConfigInfo& config);
     void bindInstanced() const;
     void drawInstanced() const;
-    void updateInstanceData(const void* instanceData, size_t instanceSize, size_t instanceCount) const;
+    void updateInstanceData(const void* instanceData, size_t instanceSize, size_t instanceCount);
     void cleanup();
 
 };

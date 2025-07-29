@@ -18,7 +18,9 @@ class SPHSolver {
 public:
     std::vector<Particle> particles;
 
-    float radius = 0.1f;
+    glm::mat4 containerTransform;
+
+    float radius = 0.02f;
 
     SPHSolver() = default;
     ~SPHSolver() = default;

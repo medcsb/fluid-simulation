@@ -1,15 +1,18 @@
 #include "imguiUI.hpp"
 
+
 ImguiUI::~ImguiUI() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 }
 
-void ImguiUI::init(GLFWwindow* window, const std::string& glsl_version) {
+void ImguiUI::init(GLFWwindow* window, const std::string& glsl_version, SPHSolver* sphSolver) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+    this->sphSolver = sphSolver;
 
     // Setup Dear ImGui flags
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
@@ -46,6 +49,8 @@ void ImguiUI::mainInfoBoard(uint32_t& sceneSelector, std::vector<Scene>& scenes,
     ImGui::Begin("Renderer Info");
     ImGui::Text("OpenGL Version: %s", glGetString(GL_VERSION));
     ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+    ImGui::Text("Current GPU :%s", glGetString(GL_RENDERER));
+    ImGui::Text("vendor: %s", glGetString(GL_VENDOR));
     ImGui::Checkbox("Shadows On", &shadowsOn);
     // Scene Selector
     if (!scenes.empty()) {
@@ -88,7 +93,13 @@ void ImguiUI::transforms(Scene& scene) {
         if (model.name == "particle") {
             ImGui::PushID(i);
             if (ImGui::CollapsingHeader(model.name.c_str())) {
+                // text showing the number of particles
+                ImGui::Text("Number of Particles: %zu", sphSolver->particles.size());
                 ImGui::DragFloat("Radius", &model.getRadius(), 0.01f, 0.01f, 1.0f);
+                // button to spawn particles
+                if (ImGui::Button("Spawn Particles")) {
+                    sphSolver->spawnParticles();
+                }
             }
             ImGui::PopID();
             continue;

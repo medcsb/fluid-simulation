@@ -4,6 +4,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "sph.hpp"
 
 #include "scene.hpp"
 
@@ -14,11 +15,12 @@
 class ImguiUI {
 private:
     GLFWwindow* window;
+    SPHSolver* sphSolver;
 public:
     ImguiUI() {};
     ~ImguiUI();
 
-    void init(GLFWwindow* win, const std::string& glsl_version);
+    void init(GLFWwindow* win, const std::string& glsl_version, SPHSolver* sphSolver);
 
     void beginRender();
     void render() {ImGui::Render();}

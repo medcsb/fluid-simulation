@@ -21,11 +21,12 @@ Renderer::~Renderer() {
 void Renderer::init() {
     initWindow();
     initOpenGL();
-    imguiUI.init(window, std::to_string(OPENGL_VERSION_MAJOR * 100 + OPENGL_VERSION_MINOR * 10));
+    imguiUI.init(window, std::to_string(OPENGL_VERSION_MAJOR * 100 + OPENGL_VERSION_MINOR * 10), &sphSolver);
     initScenes();
     initShadowMap();
     initRenderStuff();
     sceneSelector = 0;
+    glfwSwapInterval(1);
     // move the camera a tiny bit up
 }
 
@@ -73,7 +74,7 @@ void Renderer::renderSphDemoScene() {
     std::vector<Shader>& shaders = currentScene.getShaders();
     std::vector<Buffer>& buffers = currentScene.getBuffers();
     std::vector<Renderable>& renderables = currentScene.getRenderables();
-    sphSolver.update(0.0016f);
+    sphSolver.update(ImGui::GetIO().DeltaTime);
     for (auto& obj : renderables) {
         Shader& shader = shaders[obj.shaderIdx];
         Buffer& buffer = buffers[obj.bufferIdx];
@@ -104,7 +105,7 @@ void Renderer::renderSphDemoScene() {
 
             buffer.bindInstanced();
             buffer.drawInstanced();
-            break;
+            continue;
         }     
         shader.setUniform("transform", UniformType::MAT4, model.transform.getTransformMatrix());
         shader.setUniform("view", UniformType::MAT4, camera.getViewMatrix());
@@ -112,6 +113,7 @@ void Renderer::renderSphDemoScene() {
         shader.setUniform("lightColor", UniformType::VEC3, currentScene.getModels()[currentScene.LightModelIdx].getColor());
 
         if (shader.getName() == "simple") {
+            if (model.name == "cube") glCullFace(GL_FRONT);
             shader.setUniform("lightSpaceMatrix", UniformType::MAT4, lightSpaceMatrix);
             shader.setUniform("lightPos", UniformType::VEC3, currentScene.getModels()[currentScene.LightModelIdx].getTransform().translationVec);
             shader.setUniform("viewPos", UniformType::VEC3, camera.getPosition());

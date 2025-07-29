@@ -13,14 +13,17 @@ void SPHSolver::update(float dt) {
 
 std::vector<glm::vec3> SPHSolver::spawnParticles() {
     std::vector<glm::vec3> positions;
-    for (float x = -1.0f; x <= 1.0f; x += radius) {
-        for (float y = 1.0f; y <= 1.0f; y += radius) {
-            for (float z = -1.0f; z <= 1.0f; z += radius) {
+    for (size_t i = 0; i < 10; ++i) {
+        for (size_t j = 0; j < 10; ++j) {
+            for (size_t k = 0; k < 10; ++k) {
                 Particle particle;
-                particle.position = glm::vec3(x, y + radius, z);
+                particle.position = glm::vec3(
+                    -1.0f + i * radius * 2.0f,
+                    radius + j * radius * 2.0f,
+                    -1.0f + k * radius * 2.0f
+                );
                 particle.velocity = glm::vec3(0.0f);
                 particles.push_back(particle);
-                positions.push_back(particle.position);
             }
         }
     }

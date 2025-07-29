@@ -9,12 +9,6 @@ void Scene::initSphDemo(SPHSolver& sphSolver) {
     clearSceneData();
     initSphDemoShaders();
     initSphDemoModels();
-    std::vector<glm::vec3> intancesPos = sphSolver.spawnParticles();
-    for (size_t i = 0; i < intancesPos.size(); ++i) {
-        getModelByName("particle").particleTs.push_back(
-            {intancesPos[i], glm::vec3(0.0f, 0.0f, 1.0f)}
-        );
-    }
     initSphDemoBuffers();
     initSphDemoRenderables();
     name = "SPH Demo";
@@ -166,12 +160,15 @@ void Scene::initSphDemoModels() {
     initFloorModel();
     initLightModel();
     initParticleModel();
+    initCubeModel();
+    models.back().getTransform().translationVec = glm::vec3(0.0f, 0.6f, 0.0f);
 }
 
 void Scene::initSphDemoBuffers() {
     initFloorBuffer();
     initLightBuffer();
     initParticleBuffer();
+    initCubeBuffer();
 }
 
 void Scene::initSphDemoRenderables() {
@@ -186,4 +183,8 @@ void Scene::initSphDemoRenderables() {
     Renderable particleRenderable{modelMap["particle"], shaderMap["sph"], bufferMap["particle"]};
     renderables.push_back(particleRenderable);
     renderableMap["particle"] = renderables.size() - 1;
+
+    Renderable cubeRenderable{modelMap["cube"], shaderMap["simple"], bufferMap["cube"]};
+    renderables.push_back(cubeRenderable);
+    renderableMap["cube"] = renderables.size() - 1;
 }

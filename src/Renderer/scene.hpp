@@ -93,6 +93,10 @@ private:
 
     // utility functions
 
+    // -------------------------------------------------
+    // Shader initialization functions
+    // -------------------------------------------------
+
     void initSimpleShader() {
         Shader simpleShader("../shaders/simple.vert", "../shaders/simple.frag");
         simpleShader.init();
@@ -125,6 +129,10 @@ private:
         shaders.push_back(sphShader);
         shaderMap["sph"] = shaders.size() - 1;
     }
+
+    // ------------------------------------------------
+    // model initialization functions
+    // ------------------------------------------------
 
     void initCubeModel() {
         Model cubeModel;
@@ -191,6 +199,10 @@ private:
         models.push_back(particleModel);
         modelMap["particle"] = models.size() - 1;
     }
+
+    // ------------------------------------------------
+    // Buffer initialization functions
+    // ------------------------------------------------
 
     void initCubeBuffer() {
         Buffer cubeBuffer;
@@ -307,13 +319,13 @@ private:
         configInfo.sizeOfInstance = sizeof(ParticleT);
         configInfo.verticesCount = getModelByName("particle").getPVertices().size();
         configInfo.indexCount = getModelByName("particle").getIndices().size();
-        configInfo.instancesCount = getModelByName("particle").getParticleTs().size();
+        configInfo.instancesCount = 10000; 
         configInfo.useEBO = true;
         configInfo.drawMode = GL_TRIANGLES;
 
         particleBuffer.initInstanced(
             getModelByName("particle").getPVertices().data(),
-            getModelByName("particle").getParticleTs().data(),
+            nullptr,
             getModelByName("particle").getIndices().data(),
             configInfo
         );
