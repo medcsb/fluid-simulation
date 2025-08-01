@@ -80,6 +80,12 @@ void Renderer::renderSphDemoScene() {
         Buffer& buffer = buffers[obj.bufferIdx];
         Model& model = models[obj.modelIdx];
         if (model.isTextured) model.bindTexture();
+        if (model.name == "cube") {
+            // update the sphSolver container
+            sphSolver.containerPosition = model.getTransform().translationVec;
+            sphSolver.containerScale = model.getTransform().scaleVec;
+            glCullFace(GL_FRONT);
+        }
         shader.use();
 
         if (shader.getName() == "sph") {
@@ -113,7 +119,6 @@ void Renderer::renderSphDemoScene() {
         shader.setUniform("lightColor", UniformType::VEC3, currentScene.getModels()[currentScene.LightModelIdx].getColor());
 
         if (shader.getName() == "simple") {
-            if (model.name == "cube") glCullFace(GL_FRONT);
             shader.setUniform("lightSpaceMatrix", UniformType::MAT4, lightSpaceMatrix);
             shader.setUniform("lightPos", UniformType::VEC3, currentScene.getModels()[currentScene.LightModelIdx].getTransform().translationVec);
             shader.setUniform("viewPos", UniformType::VEC3, camera.getPosition());
@@ -183,8 +188,8 @@ void Renderer::processInput() {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
-    cameraController.processKeyboardInput(window, frameTime);
-    cameraController.processMouseInput(window, frameTime);
+    cameraController.processKeyboardInput(window, ImGui::GetIO().DeltaTime);
+    cameraController.processMouseInput(window, ImGui::GetIO().DeltaTime);
 }
 
 void Renderer::initWindow() {

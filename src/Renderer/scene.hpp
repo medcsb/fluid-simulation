@@ -139,7 +139,7 @@ private:
         cubeModel.name = "cube";
         cubeModel.isTextured = true;
         cubeModel.texturedCube();
-        cubeModel.loadTexture("../assets/textures/wood_container.jpg");
+        cubeModel.loadTexture("../assets/textures/tiled.jpg");
         models.push_back(cubeModel);
         modelMap["cube"] = models.size() - 1;
     }

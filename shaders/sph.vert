@@ -19,6 +19,7 @@ void main() {
     vertPos = worldPos;
     vertColor = vec3(0.0f, 0.0f, 1.0f); // Default color
     float speed = sqrt(dot(instanceColor, instanceColor));
+    speed = speed / 1000.0f;
     vertColor.x = speed; // Use speed to set the red channel
     vertColor.y = 0.0f;
     vertColor.z = 1.0f - speed; // Use speed to set the blue channel

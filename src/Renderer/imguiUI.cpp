@@ -97,9 +97,9 @@ void ImguiUI::transforms(Scene& scene) {
                 ImGui::Text("Number of Particles: %zu", sphSolver->particles.size());
                 ImGui::DragFloat("Radius", &model.getRadius(), 0.01f, 0.01f, 1.0f);
                 // button to spawn particles
-                if (ImGui::Button("Spawn Particles")) {
-                    sphSolver->spawnParticles();
-                }
+                if (ImGui::Button("Spawn Particles")) sphSolver->spawnParticles();
+                if (ImGui::Button("Spawn Random Particles")) sphSolver->spawnRandom();
+                if (ImGui::Button("Clear Particles")) sphSolver->reset();
             }
             ImGui::PopID();
             continue;

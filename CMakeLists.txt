@@ -4,7 +4,7 @@ project(${PROJECT_NAME})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "-g -O2")
+set(CMAKE_CXX_FLAGS "-g")
 
 
 # Add your include and src folders

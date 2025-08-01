@@ -1,98 +1,157 @@
 #include "sph.hpp"
 
+#include <random>
 
-void SPHSolver::update(float dt) {
-    for (auto& particle : particles) {
-        particle.position += particle.velocity * dt;
-        particle.velocity += glm::vec3(0.0f, GRAVITY, 0.0f) * dt;
+void SPHSolver::computeDensity() {
+    float h = radius;
+    for (size_t i = 0; i < particles.size(); i++) {
+        densities[i] = 0.0f;
+        for (size_t j = 0; j < particles.size(); j++) {
+            if (i == j) continue;
+            float r = glm::length(particles[i].position - particles[j].position);
+            if (r >= h) continue;
+            densities[i] += poly6_kernel(r, h);
+        }
+        particles[i].velocity = glm::vec3(densities[i], 0.0f, 0.0f); // Example: setting velocity based on density
     }
+}
+void SPHSolver::update(float dt) {
+    //eulerIntegration(dt);
+    computeDensity();
 
-    resolveCollisions();
+
+    //resolveCollisions();
     resolveWallCollisions();
 }
 
-std::vector<glm::vec3> SPHSolver::spawnParticles() {
-    std::vector<glm::vec3> positions;
-    for (size_t i = 0; i < 10; ++i) {
-        for (size_t j = 0; j < 10; ++j) {
-            for (size_t k = 0; k < 10; ++k) {
+void SPHSolver::eulerIntegration(float dt) {
+    for (auto& particle : particles) {
+        particle.velocity += glm::vec3(0.0f, GRAVITY, 0.0f) * dt;
+        particle.position += particle.velocity * dt;
+    }
+}
+
+void SPHSolver::spawnParticles() {
+    
+    // Calculate how many particles can fit in each dimension
+    glm::vec3 containerMin = getContainerMin();
+    glm::vec3 availableSpace = containerScale - glm::vec3(2.0f * radius); // Account for particle radius
+    
+    int particlesPerDim = 10; // You can adjust this or calculate based on container size
+    glm::vec3 spacing = availableSpace / float(particlesPerDim - 1);
+    
+    for (int i = 0; i < particlesPerDim; ++i) {
+        for (int j = 0; j < particlesPerDim; ++j) {
+            for (int k = 0; k < particlesPerDim; ++k) {
                 Particle particle;
-                particle.position = glm::vec3(
-                    -1.0f + i * radius * 2.0f,
-                    radius + j * radius * 2.0f,
-                    -1.0f + k * radius * 2.0f
+                
+                // Position particles within the transformed container
+                particle.position = containerMin + glm::vec3(radius) + glm::vec3(
+                    i * spacing.x,
+                    j * spacing.y,
+                    k * spacing.z
                 );
+                
                 particle.velocity = glm::vec3(0.0f);
                 particles.push_back(particle);
             }
         }
     }
-    return positions;
+    // fill densities with initial values
+    densities.resize(particles.size(), 0.0f);
+}
+
+void SPHSolver::spawnRandom() {
+    glm::vec3 containerMin = getContainerMin();
+    glm::vec3 containerMax = getContainerMax();
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    std::uniform_real_distribution<float> distX(containerMin.x, containerMax.x);
+    std::uniform_real_distribution<float> distY(containerMin.y, containerMax.y);
+    std::uniform_real_distribution<float> distZ(containerMin.z, containerMax.z);
+    
+    for (int i = 0; i < 100; ++i) { // Spawn 100 random particles
+        Particle particle;
+        particle.position = glm::vec3(
+            distX(gen),
+            distY(gen),
+            distZ(gen)
+        );
+        particle.velocity = glm::vec3(0.0f);
+        particles.push_back(particle);
+    }
+    // fill densities with initial values
+    densities.resize(particles.size(), 0.0f);
 }
 
 void SPHSolver::resolveCollisions() {
     for (size_t i = 0; i < particles.size(); ++i) {
-        for (size_t j = i + 1; j < particles.size(); ++j) {
+        for (size_t j = 0; j < particles.size(); ++j) {
+            if (i == j) continue;
             glm::vec3 delta = particles[i].position - particles[j].position;
             float distance = glm::length(delta);
-            if (distance < radius * 2.0f) {
+            
+            if (distance < radius * 2.0f && distance > 0.001f) {
                 glm::vec3 normal = glm::normalize(delta);
-                if (delta == glm::vec3(0.0f)) {
-                    normal = glm::vec3(0.0f, 1.0f, 0.0f);
-                }
                 float overlap = radius * 2.0f - distance;
+                
+                // Position correction
                 particles[i].position += normal * overlap * 0.5f;
                 particles[j].position -= normal * overlap * 0.5f;
 
-                // Simple velocity response
+                float vel_i = glm::length(particles[i].velocity);
+                float vel_j = glm::length(particles[j].velocity);
 
-                float restitution = 0.5f;  // Bounciness [0 = inelastic, 1 = fully elastic]
-                float damping = 0.1f;      // Extra damping factor
-
-                glm::vec3 relativeVelocity = particles[i].velocity - particles[j].velocity;
-                float relVelAlongNormal = glm::dot(relativeVelocity, normal);
-
-                // Only resolve if they are moving toward each other
-                if (relVelAlongNormal < 0.0f) {
-                    float impulse = -(1.0f + restitution) * relVelAlongNormal;
-                    impulse *= 0.5f; // Split equally (or adjust based on mass if needed)
-
-                    glm::vec3 impulseVec = impulse * normal;
-
-                    particles[i].velocity += impulseVec * (1.0f - damping);
-                    particles[j].velocity -= impulseVec * (1.0f - damping);
-                }
-                
+                particles[i].velocity = normal * vel_i * 0.5f;
+                particles[j].velocity = -normal * vel_j * 0.5f;
             }
         }
     }
 }
 
 void SPHSolver::resolveWallCollisions() {
+    glm::vec3 containerMin = getContainerMin();
+    glm::vec3 containerMax = getContainerMax();
+    
     for (auto& particle : particles) {
-        if (particle.position.y < radius) {
-            particle.position.y = radius;
-            particle.velocity.y = -particle.velocity.y * 0.5f;
+        // Bottom wall (Y-axis)
+        if (particle.position.y < containerMin.y + radius) {
+            particle.position.y = containerMin.y + radius;
+            //particle.velocity.y = -particle.velocity.y * 0.5f;
         }
-        if (particle.position.y > 1.0f - radius) {
-            particle.position.y = 1.0f - radius;
-            particle.velocity.y = -particle.velocity.y * 0.5f;
+        // Top wall (Y-axis)
+        if (particle.position.y > containerMax.y - radius) {
+            particle.position.y = containerMax.y - radius;
+            //particle.velocity.y = -particle.velocity.y * 0.5f;
         }
-        if (particle.position.x < -1.0f + radius) {
-            particle.position.x = -1.0f + radius;
-            particle.velocity.x = -particle.velocity.x * 0.5f;
+        
+        // Left wall (X-axis)
+        if (particle.position.x < containerMin.x + radius) {
+            particle.position.x = containerMin.x + radius;
+            //particle.velocity.x = -particle.velocity.x * 0.5f;
         }
-        if (particle.position.x > 1.0f - radius) {
-            particle.position.x = 1.0f - radius;
-            particle.velocity.x = -particle.velocity.x * 0.5f;
+        // Right wall (X-axis)
+        if (particle.position.x > containerMax.x - radius) {
+            particle.position.x = containerMax.x - radius;
+            //particle.velocity.x = -particle.velocity.x * 0.5f;
         }
-        if (particle.position.z < -1.0f + radius) {
-            particle.position.z = -1.0f + radius;
-            particle.velocity.z = -particle.velocity.z * 0.5f;
+        
+        // Front wall (Z-axis)
+        if (particle.position.z < containerMin.z + radius) {
+            particle.position.z = containerMin.z + radius;
+            //particle.velocity.z = -particle.velocity.z * 0.5f;
         }
-        if (particle.position.z > 1.0f - radius) {
-            particle.position.z = 1.0f - radius;
-            particle.velocity.z = -particle.velocity.z * 0.5f;
+        // Back wall (Z-axis)
+        if (particle.position.z > containerMax.z - radius) {
+            particle.position.z = containerMax.z - radius;
+            //particle.velocity.z = -particle.velocity.z * 0.5f;
         }
     }
+}
+
+void SPHSolver::reset() {
+    particles.clear();
+    densities.clear();
 }
