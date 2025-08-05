@@ -19,6 +19,13 @@ struct Particle{
 class SPHSolver {
 public:
 
+    float timeStep = 0.01f;
+    float gravity_m = -1.0f;
+
+    // gaz consant from the perfect gas law
+    float GAS_CONSTANT = 1.0f;
+    const float PI = glm::pi<float>();
+
     const uint32_t CELLS_PER_METER = 10;
     const float CELL_SIZE = 1.0f / CELLS_PER_METER;
 
@@ -27,18 +34,24 @@ public:
     const uint32_t GRID_SIZE_Z = 10 * CELLS_PER_METER;
     const glm::vec3 GRID_CENTER = glm::vec3(0.0f);
 
+    float radius = 0.02f;
+    float smoothingRadius = 2.0f * radius; 
+    float restDensity = 0.0f;
+
     std::vector<std::vector<uint32_t>> grid;
     std::vector<Particle> particles;
-    std::vector<float> densities; 
+    std::vector<float> densities;
+    std::vector<float> pressures;
+    std::vector<glm::vec3> forces;
+    std::vector<glm::vec3> predictedPositions;
 
     // Container transform properties
     glm::vec3 containerPosition = glm::vec3(0.0f);  // Center of the container
     glm::vec3 containerScale = glm::vec3(2.0f);     // Full size of container (not half-extents)
 
-    float radius = 0.02f;
-
     SPHSolver() {
         grid.resize(GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z);
+        restDensity = poly6_kernel(0.0f, smoothingRadius);
     }
     ~SPHSolver() = default;
 
@@ -47,6 +60,9 @@ public:
     void spawnParticles();
     void spawnRandom();
 
+    void resetRestDensity() {
+        restDensity = poly6_kernel(0.0f, smoothingRadius);
+    }
 
     // Helper functions to get container bounds
     glm::vec3 getContainerMin() const {
@@ -58,17 +74,39 @@ public:
     }
 
 private:
+    void computePredictedPositions(float dt);
     void computeGrid();
     void eulerIntegration(float dt);
     void computeDensity();
+    void computePressure();
+    void computeForces();
     void resolveCollisions();
     void resolveWallCollisions();
 
     float poly6_kernel(float r, float h) {
         if (r >= h || r < 0.0f) return 0.0f;
-        const float PI = glm::pi<float>();
         float factor = 315.0f / (64.0f * PI * pow(h, 9));
         return factor * pow(h * h - r * r, 3);
+    }
+
+    glm::vec3 poly6_gradient(glm::vec3 r_ij, float r, float h) {
+        if (r >= h || r < 0.0f) return glm::vec3(0.0f);
+        float coeff = -945.0f / (32.0f * PI * pow(h, 9));
+        float factor = pow(h * h - r * r, 2);
+        return coeff * factor * (r_ij / r);
+    }
+
+    float spikey_kernel(float r, float h) {
+        if (r >= h || r < 0.0f) return 0.0f;
+        float factor = 15.0f / (PI * pow(h, 6));
+        return factor * pow(h - r, 3);
+    }
+
+    glm::vec3 spikey_gradient(glm::vec3 r_ij, float r, float h) {
+        if (r >= h || r < 0.0f) return glm::vec3(0.0f);
+        float coeff = -45.0f / (PI * pow(h, 6));
+        float factor = (h - r) * (h - r);
+        return coeff * factor * (r_ij / r);
     }
 
     uint32_t getParticleIndex(const glm::vec3& position) const {

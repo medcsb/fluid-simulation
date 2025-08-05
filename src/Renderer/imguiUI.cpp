@@ -96,10 +96,15 @@ void ImguiUI::transforms(Scene& scene) {
                 // text showing the number of particles
                 ImGui::Text("Number of Particles: %zu", sphSolver->particles.size());
                 ImGui::DragFloat("Radius", &model.getRadius(), 0.01f, 0.01f, 1.0f);
+                ImGui::DragFloat("Smoothing Radius", &sphSolver->smoothingRadius, 0.001f, 0.01f, 5.0f);
+                ImGui::DragFloat("Rest Density", &sphSolver->restDensity, 0.1f, 0.0f, 1000.0f);
+                ImGui::DragFloat("Gaz Constant", &sphSolver->GAS_CONSTANT, 0.001f, 0.001f, 1.0f);
+                ImGui::DragFloat("gravity_m", &sphSolver->gravity_m, 0.01f, -10.0f, 0.0f);
                 // button to spawn particles
                 if (ImGui::Button("Spawn Particles")) sphSolver->spawnParticles();
                 if (ImGui::Button("Spawn Random Particles")) sphSolver->spawnRandom();
                 if (ImGui::Button("Clear Particles")) sphSolver->reset();
+                if (ImGui::Button("Reset Rest Density")) sphSolver->resetRestDensity();
             }
             ImGui::PopID();
             continue;

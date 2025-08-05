@@ -23,6 +23,7 @@ void main() {
     vertColor.x = speed; // Use speed to set the red channel
     vertColor.y = 0.0f;
     vertColor.z = 1.0f - speed; // Use speed to set the blue channel
+    vertColor = normalize(vertColor);
     vertNormal = normalize(aNormal); 
     
 }
