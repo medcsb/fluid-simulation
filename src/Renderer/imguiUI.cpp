@@ -119,7 +119,6 @@ void ImguiUI::transforms(Scene& scene) {
 
                 // if radius or resolution changed, update the sphere model
                 if (radiusChanged || resolutionChanged) {
-                    std::cout << "changed" << std::endl;
                     model.vertices.clear();
                     model.indices.clear();
                     model.simpleSphere();

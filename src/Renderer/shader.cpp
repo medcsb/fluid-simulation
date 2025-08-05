@@ -44,7 +44,13 @@ void Shader::compileShader(const std::string& code, uint32_t shaderType, uint32_
 void Shader::checkCompileErrors(uint32_t shader, const std::string& type) {
     int success;
     char infoLog[512];
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+
+    if (type != "Program") {
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    } else {
+        glGetProgramiv(shader, GL_LINK_STATUS, &success);
+    }
+    
     if (!success) {
         glGetShaderInfoLog(shader, 512, nullptr, infoLog);
         throw std::runtime_error(type + " Shader compilation failed: " + std::string(infoLog));

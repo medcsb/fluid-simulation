@@ -4,7 +4,14 @@ project(${PROJECT_NAME})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "-g")
+# use debugs stuff like lasan
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
+set(CMAKE_BUILD_TYPE Debug)
+
+add_compile_definitions(SHADER_DIR="${CMAKE_SOURCE_DIR}/shaders/")
+add_compile_definitions(ASSETS_DIR="${CMAKE_SOURCE_DIR}/assets/")
+add_compile_definitions(MODELS_DIR="${CMAKE_SOURCE_DIR}/assets/models/")
+add_compile_definitions(TEXTURES_DIR="${CMAKE_SOURCE_DIR}/assets/textures/")
 
 
 # Add your include and src folders

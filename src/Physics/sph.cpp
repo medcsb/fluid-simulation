@@ -4,19 +4,25 @@
 
 void SPHSolver::computeDensity() {
     float h = radius;
-    for (size_t i = 0; i < particles.size(); i++) {
-        densities[i] = 0.0f;
-        for (size_t j = 0; j < particles.size(); j++) {
-            if (i == j) continue;
-            float r = glm::length(particles[i].position - particles[j].position);
+    for (size_t particleIdx = 0; particleIdx < particles.size(); ++particleIdx) {
+        float density = 0.0f;
+        const Particle& particle = particles[particleIdx];
+        uint32_t cellIdx = getParticleIndex(particle.position);
+        const auto& neighs = grid[cellIdx];
+        for (uint32_t neighbourIdx : neighs) {
+            if (neighbourIdx == particleIdx) continue;
+            const Particle& neighbour = particles[neighbourIdx];
+            float r = glm::length(particle.position - neighbour.position);
             if (r >= h) continue;
-            densities[i] += poly6_kernel(r, h);
+            density += poly6_kernel(r, h);
         }
-        particles[i].velocity = glm::vec3(densities[i], 0.0f, 0.0f); // Example: setting velocity based on density
+        densities[particleIdx] = density;
+        particles[particleIdx].velocity = glm::vec3(densities[particleIdx], 0.0f, 0.0f);
     }
 }
 void SPHSolver::update(float dt) {
     //eulerIntegration(dt);
+    computeGrid();
     computeDensity();
 
 
@@ -151,7 +157,26 @@ void SPHSolver::resolveWallCollisions() {
     }
 }
 
+void SPHSolver::computeGrid() {
+    for (auto& cell : grid) {
+        cell.clear();
+    }
+    
+    for (size_t particleIdx = 0; particleIdx < particles.size(); ++particleIdx) {
+        uint32_t cellIdx = getParticleIndex(particles[particleIdx].position);
+        glm::uvec3 cellCoords = gridIndexFromFlat(cellIdx);
+        std::array<uint32_t, 27> neighbours = getNeighbourIndices(
+            cellCoords.x, cellCoords.y, cellCoords.z
+        );
+        for (uint32_t neighbourIndex : neighbours) {
+            if (neighbourIndex == UINT32_MAX) continue;
+            grid[neighbourIndex].push_back(particleIdx);
+        }
+    }
+}
+
 void SPHSolver::reset() {
     particles.clear();
     densities.clear();
+    grid.clear();
 }

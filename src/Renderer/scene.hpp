@@ -98,7 +98,7 @@ private:
     // -------------------------------------------------
 
     void initSimpleShader() {
-        Shader simpleShader("../shaders/simple.vert", "../shaders/simple.frag");
+        Shader simpleShader(std::string(SHADER_DIR) + "simple.vert", std::string(SHADER_DIR) + "simple.frag");
         simpleShader.init();
         simpleShader.setName("simple");
         shaders.push_back(simpleShader);
@@ -106,7 +106,7 @@ private:
     }
 
     void initLightShader() {
-        Shader lightShader("../shaders/light.vert", "../shaders/light.frag");
+        Shader lightShader(std::string(SHADER_DIR) + "light.vert", std::string(SHADER_DIR) + "light.frag");
         lightShader.init();
         lightShader.setName("light");
         shaders.push_back(lightShader);
@@ -114,7 +114,8 @@ private:
     }
 
     void initShadowShader() {
-        Shader shadowShader("../shaders/shadow.vert", "../shaders/shadow.frag");
+        Shader shadowShader(std::string(SHADER_DIR) + "shadow.vert", std::string(SHADER_DIR) + "shadow.frag");
+        
         shadowShader.init();
         shadowShader.setName("shadow");
         shaders.push_back(shadowShader);
@@ -123,7 +124,7 @@ private:
     }
 
     void initSphShader() {
-        Shader sphShader("../shaders/sph.vert", "../shaders/sph.frag");
+        Shader sphShader(std::string(SHADER_DIR) + "sph.vert", std::string(SHADER_DIR) + "sph.frag");
         sphShader.init();
         sphShader.setName("sph");
         shaders.push_back(sphShader);
@@ -139,7 +140,7 @@ private:
         cubeModel.name = "cube";
         cubeModel.isTextured = true;
         cubeModel.texturedCube();
-        cubeModel.loadTexture("../assets/textures/tiled.jpg");
+        cubeModel.loadTexture(std::string(TEXTURES_DIR) + "tiled.jpg");
         models.push_back(cubeModel);
         modelMap["cube"] = models.size() - 1;
     }
@@ -149,7 +150,7 @@ private:
         floor.name = "floor";
         floor.isTextured = true;
         floor.simpleQuad();
-        floor.loadTexture("../assets/textures/brick_wall.jpg");
+        floor.loadTexture(std::string(TEXTURES_DIR) + "brick_wall.jpg");
         for (auto& vertex : floor.getVertices()) {
             vertex.texCoord *= glm::vec2(10.0f, 10.0f); // Scale texture coordinates
         }
@@ -174,7 +175,7 @@ private:
         Model dragonModel;
         dragonModel.name = "dragon";
         dragonModel.isTextured = false;
-        dragonModel.loadModel("../assets/models/dragon.obj");
+        dragonModel.loadModel(std::string(MODELS_DIR) + "dragon.obj");
         models.push_back(dragonModel);
         modelMap["dragon"] = models.size() - 1;
     }
