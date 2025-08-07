@@ -31,7 +31,7 @@ void SPHSolver::computeGrid() {
     }
     
     for (size_t particleIdx = 0; particleIdx < particles.size(); ++particleIdx) {
-        uint32_t cellIdx = getParticleIndex(particles[particleIdx].position);
+        uint32_t cellIdx = getParticleIndex(predictedPositions[particleIdx]);
         glm::uvec3 cellCoords = gridIndexFromFlat(cellIdx);
         std::array<uint32_t, 27> neighbours = getNeighbourIndices(
             cellCoords.x, cellCoords.y, cellCoords.z
@@ -48,11 +48,11 @@ void SPHSolver::computeDensity() {
     for (size_t particleIdx = 0; particleIdx < particles.size(); ++particleIdx) {
         float density = 0.0f;
         const Particle& particle = particles[particleIdx];
-        uint32_t cellIdx = getParticleIndex(particle.position);
+        uint32_t cellIdx = getParticleIndex(predictedPositions[particleIdx]);
         const auto& neighs = grid[cellIdx];
         for (uint32_t neighbourIdx : neighs) {
             const Particle& neighbour = particles[neighbourIdx];
-            float r = glm::length(particle.position - neighbour.position);
+            float r = glm::length(predictedPositions[particleIdx] - predictedPositions[neighbourIdx]);
             if (r >= h) continue;
             density += spikey_kernel(r, h);
         }
@@ -62,7 +62,12 @@ void SPHSolver::computeDensity() {
 
 void SPHSolver::computePressure() {
     for (size_t i = 0; i < particles.size(); ++i) {
-        pressures[i] = GAS_CONSTANT * (densities[i] - restDensity);
+        float pressure = GAS_CONSTANT * (densities[i] - restDensity);
+        if (pressure > 0) {
+            pressures[i] = pressure;
+        } else {
+            pressures[i] = 0;
+        }
     }
 }
 
@@ -75,7 +80,7 @@ void SPHSolver::computeForces() {
         float pi_density = densities[particleIdx];
         float pi_pressure = pressures[particleIdx];
 
-        uint32_t cellIdx = getParticleIndex(particle.position);
+        uint32_t cellIdx = getParticleIndex(predictedPositions[particleIdx]);
         const auto& neighs = grid[cellIdx];
         for (uint32_t neighbourIdx : neighs) {
             if (neighbourIdx == particleIdx) continue;
@@ -83,7 +88,7 @@ void SPHSolver::computeForces() {
             float pj_density = densities[neighbourIdx];
             float pj_pressure = pressures[neighbourIdx];
 
-            glm::vec3 r_ij = particle.position - neighbour.position;
+            glm::vec3 r_ij = predictedPositions[particleIdx] - predictedPositions[neighbourIdx];
             float r = glm::length(r_ij);
             if (r >= h || r == 0.0f) continue;
 
@@ -92,7 +97,7 @@ void SPHSolver::computeForces() {
         }
         glm::vec3 gravity(0.0f, gravity_m, 0.0f);
         if (densities[particleIdx] != 0.0f) {
-            forces[particleIdx] = (pressureForce) / densities[particleIdx] + gravity;
+            forces[particleIdx] = (pressureForce + gravity) / densities[particleIdx];
         } else {
             forces[particleIdx] = glm::vec3(0.0f);
         }
@@ -100,6 +105,8 @@ void SPHSolver::computeForces() {
 }
 
 void SPHSolver::update(float dt) {
+    if (particles.empty()) return;
+    computePredictedPositions(dt);
     computeGrid();
     computeDensity();
     computePressure();

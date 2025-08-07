@@ -79,7 +79,7 @@ public:
     Transform transform{};
     Light light{};
     glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
-    float radius = 0.02f;
+    float radius = 1.0f;
     uint32_t resolution = 20;
 
     bool isTextured = false;

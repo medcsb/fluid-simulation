@@ -97,6 +97,7 @@ void Scene::initScene1Models() {
     initLightModel();
     initFloorModel();
     initDragonModel();
+    getModelByName("dragon").getTransform().translationVec = glm::vec3(0.0f, 0.5f, 0.0f);
 }
 
 void Scene::initScene1Buffers() {
@@ -162,6 +163,10 @@ void Scene::initSphDemoModels() {
     initParticleModel();
     initCubeModel();
     models.back().getTransform().translationVec = glm::vec3(0.0f, 0.6f, 0.0f);
+    models.back().getTransform().scaleVec = glm::vec3(20.0f, 20.0f, 20.0f);
+    for (auto& vertex: models.back().getVertices()) {
+        vertex.texCoord *= glm::vec2(20.0f, 20.0f);
+    }
 }
 
 void Scene::initSphDemoBuffers() {

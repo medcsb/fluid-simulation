@@ -21,22 +21,21 @@ public:
 
     float timeStep = 0.01f;
     float gravity_m = -1.0f;
+    float max_vel = 1.0f;
 
     // gaz consant from the perfect gas law
     float GAS_CONSTANT = 1.0f;
     const float PI = glm::pi<float>();
 
-    const uint32_t CELLS_PER_METER = 10;
-    const float CELL_SIZE = 1.0f / CELLS_PER_METER;
-
-    const uint32_t GRID_SIZE_X = 10 * CELLS_PER_METER;
-    const uint32_t GRID_SIZE_Y = 10 * CELLS_PER_METER;
-    const uint32_t GRID_SIZE_Z = 10 * CELLS_PER_METER;
+    const uint32_t GRID_SIZE_X = 100;
+    const uint32_t GRID_SIZE_Y = 100;
+    const uint32_t GRID_SIZE_Z = 100;
     const glm::vec3 GRID_CENTER = glm::vec3(0.0f);
 
-    float radius = 0.02f;
+    float radius = 1.0f;
     float smoothingRadius = 2.0f * radius; 
-    float restDensity = 0.0f;
+    float restDensity = 2.5f;
+    float mass = 0.03f;
 
     std::vector<std::vector<uint32_t>> grid;
     std::vector<Particle> particles;
@@ -51,7 +50,6 @@ public:
 
     SPHSolver() {
         grid.resize(GRID_SIZE_X * GRID_SIZE_Y * GRID_SIZE_Z);
-        restDensity = poly6_kernel(0.0f, smoothingRadius);
     }
     ~SPHSolver() = default;
 
@@ -110,8 +108,8 @@ private:
     }
 
     uint32_t getParticleIndex(const glm::vec3& position) const {
-        glm::vec3 translation = GRID_CENTER - glm::vec3(GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z) * 0.5f * CELL_SIZE;
-        glm::vec3 relativePos = (position - translation) / CELL_SIZE;
+        glm::vec3 translation = GRID_CENTER - glm::vec3(GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z) * 0.5f;
+        glm::vec3 relativePos = position - translation;
 
         int gridX = static_cast<int>(relativePos.x);
         int gridY = static_cast<int>(relativePos.y);
