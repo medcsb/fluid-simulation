@@ -72,11 +72,27 @@ void ImguiUI::simpleScene(Scene& scene, Camera& camera, CameraController& camera
     ImGui::Checkbox("Perspective View", &isPerspective);
     ImGui::SliderFloat("Gamma", &gamma, 0.1f, 3.0f, "%.1f");
 
+    if (scene.name == "SPH Demo") sphDemo(scene);
+
     transforms(scene);
     cameraConfig(camera, cameraController);
     lightConfig(scene.getModels(), scene.LightModelIdx);
 
     ImGui::End();
+}
+
+void ImguiUI::sphDemo(Scene& scene) {
+    if (!ImGui::CollapsingHeader("SPH Demo")) return;
+    ImGui::Text("SPH Demo Controls");
+    ImGui::Text("Number of Particles: %zu", sphSolver->particles.size());
+    ImGui::Text("Average Density: %.2f", sphSolver->getAverageDensity());
+    ImGui::DragFloat("Rest Density", &sphSolver->restDensity, 1.0f, 0.1f, 1000.0f);
+    ImGui::DragFloat("Gravity", &sphSolver->gravity_m, 0.001f, -1.0f, 1.0f);
+    ImGui::DragFloat("Smoothing Radius", &sphSolver->h, 0.001f, 0.01f, 5.0f);
+    ImGui::DragFloat("pressure multiplier", &sphSolver->pressure_multiplier, 0.001f, 0.01f, 1.0f);
+    if (ImGui::Button("Spawn Particles")) sphSolver->spawnParticles();
+    if (ImGui::Button("Spawn Random Particles")) sphSolver->spawnRandom();
+    if (ImGui::Button("Clear Particles")) sphSolver->reset();
 }
 
 void ImguiUI::transforms(Scene& scene) {
@@ -90,26 +106,7 @@ void ImguiUI::transforms(Scene& scene) {
         Model& model = models[i];
 
         // special case for particle model
-        if (model.name == "particle") {
-            ImGui::PushID(i);
-            if (ImGui::CollapsingHeader(model.name.c_str())) {
-                // text showing the number of particles
-                ImGui::Text("Number of Particles: %zu", sphSolver->particles.size());
-                ImGui::DragFloat("Radius", &model.getRadius(), 0.01f, 0.01f, 1.0f);
-                ImGui::DragFloat("Smoothing Radius", &sphSolver->smoothingRadius, 0.001f, 0.01f, 5.0f);
-                ImGui::DragFloat("Rest Density", &sphSolver->restDensity, 0.1f, 0.1f, 1000.0f);
-                ImGui::DragFloat("Gaz Constant", &sphSolver->GAS_CONSTANT, 0.001f, 0.001f, 10.0f);
-                ImGui::DragFloat("gravity_m", &sphSolver->gravity_m, 0.1f, -10.0f, 0.0f);
-                ImGui::DragFloat("max_vel", &sphSolver->max_vel, 1.0f, 1.0f, 100.0f);
-                // button to spawn particles
-                if (ImGui::Button("Spawn Particles")) sphSolver->spawnParticles();
-                if (ImGui::Button("Spawn Random Particles")) sphSolver->spawnRandom();
-                if (ImGui::Button("Clear Particles")) sphSolver->reset();
-                if (ImGui::Button("Reset Rest Density")) sphSolver->resetRestDensity();
-            }
-            ImGui::PopID();
-            continue;
-        }
+        if (model.name == "particle") continue;
         // special case sphere model
         if (model.name == "sphere") {
             // we can change the radius and resolution of the sphere

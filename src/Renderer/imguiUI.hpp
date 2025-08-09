@@ -30,6 +30,7 @@ public:
     void simpleScene(Scene& scene, Camera& camera, CameraController& cameraController, float& gamma, bool& isPerspective, bool& showDepth);
 
 private:
+    void sphDemo(Scene& scene);
     void transforms(Scene& scene);
     void cameraConfig(Camera& camera, CameraController& cameraController);
     void lightConfig(std::vector<Model>& models, uint32_t LightModelIdx);

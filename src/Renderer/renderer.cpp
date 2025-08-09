@@ -74,7 +74,7 @@ void Renderer::renderSphDemoScene() {
     std::vector<Shader>& shaders = currentScene.getShaders();
     std::vector<Buffer>& buffers = currentScene.getBuffers();
     std::vector<Renderable>& renderables = currentScene.getRenderables();
-    sphSolver.update(ImGui::GetIO().DeltaTime);
+    sphSolver.update(0.001f);
     for (auto& obj : renderables) {
         Shader& shader = shaders[obj.shaderIdx];
         Buffer& buffer = buffers[obj.bufferIdx];
@@ -82,8 +82,8 @@ void Renderer::renderSphDemoScene() {
         if (model.isTextured) model.bindTexture();
         if (model.name == "cube") {
             // update the sphSolver container
-            sphSolver.containerPosition = model.getTransform().translationVec;
-            sphSolver.containerScale = model.getTransform().scaleVec;
+            sphSolver.boxPos = model.getTransform().translationVec;
+            sphSolver.boxSize = model.getTransform().scaleVec;
             glCullFace(GL_FRONT);
         }
         shader.use();

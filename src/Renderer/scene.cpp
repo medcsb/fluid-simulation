@@ -163,9 +163,9 @@ void Scene::initSphDemoModels() {
     initParticleModel();
     initCubeModel();
     models.back().getTransform().translationVec = glm::vec3(0.0f, 0.6f, 0.0f);
-    models.back().getTransform().scaleVec = glm::vec3(20.0f, 20.0f, 20.0f);
+    models.back().getTransform().scaleVec = glm::vec3(1.0f, 1.0f, 1.0f);
     for (auto& vertex: models.back().getVertices()) {
-        vertex.texCoord *= glm::vec2(20.0f, 20.0f);
+        vertex.texCoord *= glm::vec2(1.0f, 1.0f);
     }
 }
 
