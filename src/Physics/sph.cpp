@@ -4,16 +4,23 @@
 #include <random>
 
 void SPHSolver::update(float dt) {
+    predictePositions(dt);
     builGrid();
     computeDensityPressure();
     computeForces();
     integrate(dt);
 }
 
+void SPHSolver::predictePositions(float dt) {
+    for (size_t i = 0; i < particles.size(); ++i) {
+        predictedPositions[i] = particles[i].position + dt * particles[i].velocity;
+    }
+}
+
 void SPHSolver::builGrid() {
     grid.clear();
     for (size_t i = 0; i < particles.size(); ++i) {
-        GridCoord cell = getCellCord(particles[i].position);
+        GridCoord cell = getCellCord(predictedPositions[i]);
         grid[cell].push_back(i);
     }
 }
@@ -23,7 +30,7 @@ void SPHSolver::computeDensityPressure() {
         densities[i] = 0.0f;
         auto neighbours = getNeighbours(i);
         for (uint32_t j : neighbours) {
-            glm::vec3 r_ij = particles[i].position - particles[j].position;
+            glm::vec3 r_ij = predictedPositions[i] - predictedPositions[j];
             float r2 = glm::dot(r_ij, r_ij);
             if (r2 < h * h) densities[i] += mass * poly6_kernel(r2);
         }
@@ -39,9 +46,16 @@ void SPHSolver::computeForces() {
         auto neighbours = getNeighbours(i);
         for (uint32_t j : neighbours) {
             if (i == j) continue;
-            glm::vec3 r_ij = particles[i].position - particles[j].position;
+            glm::vec3 r_ij = predictedPositions[i] - predictedPositions[j];
             float rlen = glm::length(r_ij);
-            if (rlen < h && rlen > 1e-6f) {
+            if (rlen < 1e-4f) {
+                // chose a random direction to avoid division by zero
+                glm::vec3 randomDir = glm::vec3(0.0f, 1.0f, 0.0f);
+                float epsDist = epsilon * h;
+                particles[i].position += 0.5f * epsDist * randomDir;
+                particles[j].position -= 0.5f * epsDist * randomDir;
+            }
+            if (rlen < h && rlen > 1e-4f) {
                 fPressure += -mass * (pressures[i] + pressures[j]) / (2.0f * densities[j]) *
                              spiky_grad(r_ij, rlen);
                 fViscosity += viscosity * mass * (particles[j].velocity - particles[i].velocity) / densities[j] *
@@ -57,18 +71,31 @@ void SPHSolver::integrate(float dt) {
     glm::vec3 half = boxSize * 0.5f;
     glm::vec3 minB = boxPos - half;
     glm::vec3 maxB = boxPos + half;
+
+    glm::vec3 wallVelMin = ((boxPos - boxSize * 0.5f) - (prevBoxPos - prevBoxSize * 0.5f)) / dt;
+    glm::vec3 wallVelMax = ((boxPos + boxSize * 0.5f) - (prevBoxPos + prevBoxSize * 0.5f)) / dt;
+
+    prevBoxPos = boxPos;
+    prevBoxSize = boxSize;
+
     for (size_t i = 0; i < particles.size(); i++) {
+        // euler integration
         particles[i].velocity += dt * (forces[i] / mass);
+        float speed = glm::length(particles[i].velocity);
+        speed = std::min(speed, max_speed);
+        particles[i].velocity = glm::normalize(particles[i].velocity) * speed;
         particles[i].position += dt * particles[i].velocity;
 
         // Boundary conditions
         for (int axis = 0; axis < 3; ++axis) {
             if (particles[i].position[axis] - radius < minB[axis]) {
                 particles[i].position[axis] = minB[axis] + radius;
-                particles[i].velocity[axis] *= -bounce;
+                float relVel = particles[i].velocity[axis] - wallVelMin[axis] / restDensity;
+                particles[i].velocity[axis] = wallVelMin[axis] - relVel * bounce;
             } else if (particles[i].position[axis] + radius > maxB[axis]) {
                 particles[i].position[axis] = maxB[axis] - radius;
-                particles[i].velocity[axis] *= -bounce;
+                float relVel = particles[i].velocity[axis] - wallVelMax[axis] / restDensity;
+                particles[i].velocity[axis] = wallVelMax[axis] - relVel * bounce;
             }
         }
     }
@@ -132,6 +159,7 @@ void SPHSolver::spawnParticles() {
             }
         }
     }
+    predictedPositions.resize(particles.size(), glm::vec3(0.0f));
     densities.resize(particles.size(), restDensity);
     pressures.resize(particles.size(), 0.0f);
     forces.resize(particles.size(), glm::vec3(0.0f));
@@ -151,6 +179,7 @@ void SPHSolver::spawnRandom() {
         particles.push_back(p);
     }
 
+    predictedPositions.resize(particles.size(), glm::vec3(0.0f));
     densities.resize(particles.size(), restDensity);
     pressures.resize(particles.size(), 0.0f);
     forces.resize(particles.size(), glm::vec3(0.0f));

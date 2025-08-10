@@ -37,10 +37,13 @@ public:
 
     glm::vec3 boxPos = glm::vec3(0.0f);
     glm::vec3 boxSize = glm::vec3(1.0f);
+    glm::vec3 prevBoxPos = boxPos;
+    glm::vec3 prevBoxSize = boxSize;
     float bounce = 0.5f;
 
     std::unordered_map<GridCoord, std::vector<size_t>, GridCoordHash> grid;
     std::vector<Particle> particles;
+    std::vector<glm::vec3> predictedPositions;
     std::vector<float> densities;
     std::vector<float> pressures;
     std::vector<glm::vec3> forces;
@@ -50,9 +53,11 @@ public:
     float h2 = h * h;
     float restDensity = 1000.0f;
     float mass = restDensity * (4.0f / 3.0f) * glm::pi<float>() * std::pow(radius, 3);
-    float pressure_multiplier = 0.02f;
+    float pressure_multiplier = 0.2f;
     float viscosity = 0.01f;
-    float gravity_m = -0.1f; // Gravity acceleration in m/s^2
+    float gravity_m = -0.4f; // Gravity acceleration in m/s^2
+    float epsilon = 1e-3f; 
+    float max_speed = 10.0f; 
 
     SPHSolver() {}
     ~SPHSolver() {}
@@ -61,12 +66,18 @@ public:
     void spawnParticles();
     void spawnRandom();
     void reset();
+    void stop() {
+        for (uint32_t i = 0; i < particles.size(); ++i) {
+            particles[i].velocity = glm::vec3(0.0f);
+        }
+    }
 
     float getAverageDensity() const {
         return std::accumulate(densities.begin(), densities.end(), 0.0f) / densities.size();
     }
 
 private:
+    void predictePositions(float dt);
     void builGrid();
     void computeDensityPressure();
     void computeForces();

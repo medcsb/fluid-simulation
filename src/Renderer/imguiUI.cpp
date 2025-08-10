@@ -86,13 +86,17 @@ void ImguiUI::sphDemo(Scene& scene) {
     ImGui::Text("SPH Demo Controls");
     ImGui::Text("Number of Particles: %zu", sphSolver->particles.size());
     ImGui::Text("Average Density: %.2f", sphSolver->getAverageDensity());
+    ImGui::Text("Mass: %.2f", sphSolver->mass);
     ImGui::DragFloat("Rest Density", &sphSolver->restDensity, 1.0f, 0.1f, 1000.0f);
     ImGui::DragFloat("Gravity", &sphSolver->gravity_m, 0.001f, -1.0f, 1.0f);
     ImGui::DragFloat("Smoothing Radius", &sphSolver->h, 0.001f, 0.01f, 5.0f);
     ImGui::DragFloat("pressure multiplier", &sphSolver->pressure_multiplier, 0.001f, 0.01f, 1.0f);
+    ImGui::DragFloat("Viscosity", &sphSolver->viscosity, 0.001f, 0.0f, 0.1f);
+    ImGui::DragFloat("max speed", &sphSolver->max_speed, 0.1f, 0.1f, 20.0f);
     if (ImGui::Button("Spawn Particles")) sphSolver->spawnParticles();
     if (ImGui::Button("Spawn Random Particles")) sphSolver->spawnRandom();
     if (ImGui::Button("Clear Particles")) sphSolver->reset();
+    if (ImGui::Button("Stop Particles")) sphSolver->stop();
 }
 
 void ImguiUI::transforms(Scene& scene) {
@@ -150,7 +154,7 @@ void ImguiUI::transforms(Scene& scene) {
         if (ImGui::CollapsingHeader(model.name.c_str())) {
             ImGui::DragFloat3("Position", glm::value_ptr(model.getTransform().translationVec), 0.01f);
             ImGui::DragFloat3("Rotation", glm::value_ptr(model.getTransform().rotationVec), 0.1f);
-            ImGui::DragFloat3("Scale", glm::value_ptr(model.getTransform().scaleVec), 0.1f);
+            ImGui::DragFloat3("Scale", glm::value_ptr(model.getTransform().scaleVec), 0.01f);
             ImGui::ColorEdit3("Color", glm::value_ptr(model.getColor()));
         }
         ImGui::PopID();
